@@ -27,6 +27,14 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  showDetailButton: {
+    type: Boolean,
+    default: true,
+  },
+  detailButtonLabel: {
+    type: String,
+    default: '상세보기',
+  },
 })
 
 const emit = defineEmits(['select-card', 'click-detail'])
@@ -66,11 +74,12 @@ onUnmounted(() => {
     <i class="wi weather-icon-badge" :class="icon" aria-hidden="true" />
 
     <button
+      v-if="showDetailButton"
       class="wc-card-detail"
       type="button"
       @click.stop="emit('click-detail', city.name, city.status)"
     >
-      상세보기
+      {{ detailButtonLabel }}
     </button>
   </div>
 </template>
