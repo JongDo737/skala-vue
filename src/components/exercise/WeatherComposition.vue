@@ -1,16 +1,19 @@
 <script setup>
 import { ref, computed, watch, watchEffect, provide, onMounted } from 'vue'
+import WeatherCompositionSection from './WeatherCompositionSection.vue'
+import WeatherCompositionSearchBar from './WeatherCompositionSearchBar.vue'
 import WeatherCompositionCard from './WeatherCompositionCard.vue'
 import WeatherCityList from './WeatherCityList.vue'
 import WeatherDetailPanel from './WeatherDetailPanel.vue'
+import WeatherCompositionFooter from './WeatherCompositionFooter.vue'
+import WeatherCompositionEmpty from './WeatherCompositionEmpty.vue'
 import '@/assets/weather-composition.css'
 
 // 디자인 참고 : Animated Weather Cards
 
-// [lifecycle] : 부모 setup. 스크립트가 실행되는 시점
 console.log('[lifecycle] WeatherComposition setup')
 
-// [ref] : 지역별 날씨 원본 데이터. 왼쪽 목록/검색 필터의 기준 배열로 사용
+// [1] 모든 반응형 데이터는 부모(WeatherComposition)에 유지
 const weatherList = ref([
   { id: 'city_01', name: '서울', temp: 28, status: '맑음', humidity: 48, wind: 2.1 },
   { id: 'city_02', name: '수원', temp: 24, status: '비', humidity: 82, wind: 3.4 },
@@ -23,7 +26,6 @@ const weatherList = ref([
   { id: 'city_09', name: '제주', temp: 19, status: '바람', humidity: 66, wind: 7.5 },
 ])
 
-// [const] : 날씨 status를 type/icon/summary로 한 번에 매핑. 카드 클래스·아이콘·영문 요약에 사용
 const statusMap = {
   맑음: { type: 'sun', icon: 'wi-day-sunny', summary: 'Sunny' },
   비: { type: 'rain', icon: 'wi-rain', summary: 'Rain' },
@@ -31,56 +33,39 @@ const statusMap = {
   바람: { type: 'wind', icon: 'wi-strong-wind', summary: 'Windy' },
 }
 
-// [ref] : 도시 검색어 상태. input :value/@input 과 필터 계산에 사용
 const searchQuery = ref('')
-
-// [ref] : 현재 선택된 도시 id. 중간 카드/오른쪽 상세 패널 연동에 사용
 const selectedCityId = ref(weatherList.value[0].id)
-
-// [ref] : 상태바 문구. 도시 선택/즐겨찾기 시 갱신, watch 감시 대상
 const selectedCityInfo = ref(`${weatherList.value[0].name}이 선택되었습니다.`)
-
-// [ref] : 즐겨찾기 도시 id. 상세 패널 표시와 비교 로그에 사용
 const favoriteCityId = ref('city_01')
-
-// [ref] : 검색 입력 횟수. 타이핑할 때마다 증가해 화면에 표시
 const searchTryCount = ref(0)
 
-// [provide] : 테마 모드 (light / dark). 자식들이 inject로 받아 사용
 const themeMode = ref('light')
-
 const toggleTheme = () => {
   themeMode.value = themeMode.value === 'light' ? 'dark' : 'light'
 }
-
 provide('themeMode', themeMode)
 provide('toggleTheme', toggleTheme)
 
-// [computed] : 검색어로 도시 목록을 필터링. 왼쪽 리스트와 결과 안내 문구에 사용
 const filteredWeatherList = computed(() => {
   const query = searchQuery.value.trim()
   if (!query) return weatherList.value
   return weatherList.value.filter((item) => item.name.includes(query))
 })
 
-// [computed] : 검색 결과 개수 문구 생성. 검색창 아래 힌트 텍스트에 사용
 const searchResultLabel = computed(() => {
   const query = searchQuery.value.trim()
   if (!query) return `전체 ${weatherList.value.length}개 도시`
   return `"${query}" 검색 결과 ${filteredWeatherList.value.length}개`
 })
 
-// [computed] : 필터된 목록 중 25도 이상 도시 개수. 검색창 아래 통계 표시에 사용
 const hotCityCount = computed(() => {
   return filteredWeatherList.value.filter((item) => item.temp >= 25).length
 })
 
-// [computed] : 즐겨찾기 id에 해당하는 도시 객체. 상세 패널/힌트에 사용
 const favoriteCity = computed(() => {
   return weatherList.value.find((item) => item.id === favoriteCityId.value) || weatherList.value[0]
 })
 
-// [computed] : 현재 선택된 도시 객체. 카드·상세·상세보기 버튼의 공통 데이터로 사용
 const selectedCity = computed(() => {
   return (
     filteredWeatherList.value.find((item) => item.id === selectedCityId.value) ||
@@ -89,7 +74,6 @@ const selectedCity = computed(() => {
   )
 })
 
-// [computed] : 선택 도시 status로 CSS type/아이콘/영문 요약을 꺼냄. 카드 UI에 사용
 const weatherMeta = computed(() => {
   if (!selectedCity.value) {
     return { type: 'cloud', icon: 'wi-cloudy', summary: '' }
@@ -107,7 +91,6 @@ const weatherType = computed(() => weatherMeta.value.type)
 const weatherIcon = computed(() => weatherMeta.value.icon)
 const weatherSummary = computed(() => weatherMeta.value.summary)
 
-// [computed] : 오늘 날짜 영문 라벨. 카드/상세 날짜 표시에 사용
 const todayLabel = computed(() =>
   new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
@@ -116,25 +99,21 @@ const todayLabel = computed(() =>
   }).format(new Date()),
 )
 
-// [lifecycle] : 부모 mount. DOM에 붙은 직후
 onMounted(() => {
   console.log('[lifecycle] WeatherComposition onMounted')
 })
 
-// [watch] : selectedCityInfo 변경 감지. 상태바 문구가 바뀔 때 콘솔 로그 출력
 watch(selectedCityInfo, (newInfo, oldInfo) => {
   console.log(`[watch] 상태바 문구 변경`)
   console.log(`  이전: "${oldInfo}"`)
   console.log(`  현재: "${newInfo}"`)
 })
 
-// [watchEffect] : searchQuery 의존성 자동 추적. 검색어 타이핑마다 콘솔 로그 출력
 watchEffect(() => {
   console.log(`[watchEffect] 현재 검색어 '${searchQuery.value}' 추적 중`)
   console.log(`[watchEffect] 필터 결과 개수: ${filteredWeatherList.value.length}`)
 })
 
-// [watch] : selectedCityId 변경 감지. 선택 도시와 즐겨찾기 비교 로그 출력
 watch(selectedCityId, (newId) => {
   const city = weatherList.value.find((item) => item.id === newId)
   const isFavorite = newId === favoriteCityId.value
@@ -143,7 +122,6 @@ watch(selectedCityId, (newId) => {
   )
 })
 
-// [watch] : 검색 결과 개수 변경 감지. 필터 결과가 바뀔 때 콘솔 로그 출력
 watch(
   () => filteredWeatherList.value.length,
   (newCount, oldCount) => {
@@ -151,24 +129,20 @@ watch(
   },
 )
 
-// [fn] : 도시 선택. selectedCityId/selectedCityInfo를 갱신해 카드·상태바에 반영
 const selectCity = (city) => {
   selectedCityId.value = city.id
   selectedCityInfo.value = `${city.name}이 선택되었습니다.`
 }
 
-// [fn] : 상세보기 alert. 하단 버튼 클릭 시 선택 도시 날씨 안내
 const showDetail = (cityName, status) => {
   window.alert(`${cityName}의 현재 날씨는 [${status}] 상태입니다.`)
 }
 
-// [fn] : 검색 input 핸들러. searchQuery 갱신 + 입력 횟수 증가
-const onSearchInput = (event) => {
-  searchQuery.value = event.target.value
+const onUpdateQuery = (val) => {
+  searchQuery.value = val
   searchTryCount.value += 1
 }
 
-// [fn] : 현재 선택 도시를 즐겨찾기로 설정. favoriteCityId와 상태바 문구 갱신
 const toggleFavorite = () => {
   if (!selectedCity.value) return
   favoriteCityId.value = selectedCity.value.id
@@ -180,78 +154,65 @@ const toggleFavorite = () => {
   <div class="weather-composition" :class="themeMode">
     <div class="background">
       <div class="container" :class="[weatherType, themeMode]">
-        <!-- [template] : 검색 입력 + 테마 토글 -->
-        <div class="search-row">
-          <div class="search-toolbar">
-            <input
-              type="text"
-              :value="searchQuery"
-              @input="onSearchInput"
-              placeholder="도시 검색"
-            />
-            <!-- [provide] : 테마 토글. 자식은 inject('themeMode')로 같은 상태를 받음 -->
-            <button class="btn-theme" type="button" @click="toggleTheme">
-              {{ themeMode === 'light' ? '다크모드' : '라이트모드' }}
-            </button>
-          </div>
-          <p class="search-hint">
-            검색: <strong v-text="searchQuery || '전체'"></strong>
-            · {{ searchResultLabel }}
-            · 더운 도시 {{ hotCityCount }}개
-            · 입력 횟수 {{ searchTryCount }}
-            · 테마 {{ themeMode }}
-          </p>
-          <p class="search-hint">즐겨찾기: {{ favoriteCity.name }}</p>
-        </div>
-
         <!--
-          [props/emits]
-          - WeatherCityList: cities/selectedId ↓ , select-city ↑
-          - WeatherCompositionCard: city/summary/icon ↓ , select ↑
-          - WeatherDetailPanel: city/favorite ↓ , toggle-favorite ↑
-          검색 결과 0개면 카드가 사라져 onUnmounted 확인 가능
+          [2] WeatherCompositionSection + slot
+          부모가 SearchBar를 주입. Slot 안 자식도 부모와 props/emits로 직접 통신.
         -->
-        <div class="layout" v-if="filteredWeatherList.length > 0 && selectedCity">
-          <WeatherCityList
-            :cities="filteredWeatherList"
-            :selected-id="selectedCity.id"
-            @select-city="selectCity"
+        <WeatherCompositionSection title="도시 검색">
+          <!-- [3] SearchBar: props / emits(update-query, toggle-theme) -->
+          <WeatherCompositionSearchBar
+            :current-query="searchQuery"
+            :result-label="searchResultLabel"
+            :hot-count="hotCityCount"
+            :try-count="searchTryCount"
+            :favorite-name="favoriteCity.name"
+            @update-query="onUpdateQuery"
+            @toggle-theme="toggleTheme"
           />
+        </WeatherCompositionSection>
 
-          <main class="panel">
-            <WeatherCompositionCard
+        <!-- [2] 리스트/카드/상세를 slot으로 묶는 공통 섹션 -->
+        <WeatherCompositionSection title="지역별 날씨 현황">
+          <div class="layout" v-if="filteredWeatherList.length > 0 && selectedCity">
+            <WeatherCityList
+              :cities="filteredWeatherList"
+              :selected-id="selectedCity.id"
+              @select-city="selectCity"
+            />
+
+            <main class="panel">
+              <!-- [4] Card: props(city...) / emits(select-card, click-detail) -->
+              <WeatherCompositionCard
+                :city="selectedCity"
+                :date-label="todayLabel"
+                :summary="weatherSummary"
+                :icon="weatherIcon"
+                @select-card="selectCity"
+                @click-detail="showDetail"
+              />
+            </main>
+
+            <WeatherDetailPanel
               :city="selectedCity"
+              :favorite-name="favoriteCity.name"
               :date-label="todayLabel"
               :summary="weatherSummary"
-              :icon="weatherIcon"
-              @select="selectCity"
+              @toggle-favorite="toggleFavorite"
             />
-          </main>
+          </div>
 
-          <WeatherDetailPanel
-            :city="selectedCity"
-            :favorite-name="favoriteCity.name"
-            :date-label="todayLabel"
-            :summary="weatherSummary"
-            @toggle-favorite="toggleFavorite"
-          />
-        </div>
+          <!-- [7] Empty 컴포넌트 추가 분리 -->
+          <WeatherCompositionEmpty v-else />
+        </WeatherCompositionSection>
 
-        <p v-else class="empty-cities layout-empty">
-          검색 결과가 일치하는 도시가 없습니다.
-        </p>
-
-        <!-- [template] : 하단 상세보기 + 상태바 -->
-        <div class="footer-actions" v-if="selectedCity">
-          <button
-            class="btn-detail"
-            type="button"
-            @click.stop="showDetail(selectedCity.name, selectedCity.status)"
-          >
-            상세보기
-          </button>
-          <div class="status-bar">{{ selectedCityInfo }}</div>
-        </div>
+        <!-- [7] Footer(상태바+상세보기) 추가 분리 -->
+        <WeatherCompositionFooter
+          v-if="selectedCity"
+          :message="selectedCityInfo"
+          :city-name="selectedCity.name"
+          :status="selectedCity.status"
+          @click-detail="showDetail"
+        />
       </div>
     </div>
   </div>

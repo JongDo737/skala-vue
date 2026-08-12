@@ -2,12 +2,13 @@
 import { inject, onMounted, onUpdated, onUnmounted } from 'vue'
 import IconWeatherCard from '@/components/icons/IconWeatherCard.vue'
 
-// [lifecycle] : setup 단계. 컴포넌트 인스턴스가 생성될 때 1회 실행
+// [lifecycle] : setup
 console.log('[lifecycle] WeatherCompositionCard setup')
 
 /**
- * [props] : 부모가 내려준 도시/날짜/요약/아이콘
- * [emits] : 카드 클릭 시 select로 도시 객체를 부모에 전달
+ * [props] : city, dateLabel, summary, icon — 선택 도시 표시
+ * [emits] : select-card — 카드 선택
+ * [emits] : click-detail — 상세보기
  */
 const props = defineProps({
   city: {
@@ -28,22 +29,17 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['select'])
-
-// [inject] : 부모가 provide한 테마 모드 (light / dark)
+const emit = defineEmits(['select-card', 'click-detail'])
 const themeMode = inject('themeMode', { value: 'light' })
 
-// [lifecycle] : mount. DOM에 붙은 직후
 onMounted(() => {
   console.log('[lifecycle] WeatherCompositionCard onMounted', props.city.name)
 })
 
-// [lifecycle] : update. props 변경 등으로 리렌더된 직후
 onUpdated(() => {
   console.log('[lifecycle] WeatherCompositionCard onUpdated', props.city.name)
 })
 
-// [lifecycle] : unmount. 검색 결과 0개 등으로 카드가 화면에서 사라질 때
 onUnmounted(() => {
   console.log('[lifecycle] WeatherCompositionCard onUnmounted')
 })
@@ -54,7 +50,7 @@ onUnmounted(() => {
     class="weather-card-shell"
     id="card"
     :class="themeMode"
-    @click="emit('select', city)"
+    @click="emit('select-card', city)"
   >
     <IconWeatherCard />
 
@@ -68,5 +64,42 @@ onUnmounted(() => {
     </div>
 
     <i class="wi weather-icon-badge" :class="icon" aria-hidden="true" />
+
+    <button
+      class="wc-card-detail"
+      type="button"
+      @click.stop="emit('click-detail', city.name, city.status)"
+    >
+      상세보기
+    </button>
   </div>
 </template>
+
+<style scoped>
+/* 카드 시각 스타일은 weather-composition.css의 .weather-card-shell 규칙을 사용 */
+.wc-card-detail {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2;
+  padding: 6px 10px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.wc-card-detail:hover {
+  border-color: #4444ff;
+  color: #4444ff;
+}
+
+.dark .wc-card-detail {
+  background: rgba(20, 28, 48, 0.75);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #f2f5ff;
+}
+</style>

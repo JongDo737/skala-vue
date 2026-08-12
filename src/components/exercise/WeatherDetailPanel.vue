@@ -3,7 +3,7 @@ import { inject } from 'vue'
 
 /**
  * [props] : city, favoriteName, dateLabel, summary
- * [emits] : toggle-favorite — 즐겨찾기 버튼 클릭 시 부모로 전달
+ * [emits] : toggle-favorite
  */
 defineProps({
   city: {
@@ -25,8 +25,6 @@ defineProps({
 })
 
 const emit = defineEmits(['toggle-favorite'])
-
-// [inject] : 부모가 provide한 테마 모드
 const themeMode = inject('themeMode', { value: 'light' })
 </script>
 
@@ -76,3 +74,9 @@ const themeMode = inject('themeMode', { value: 'light' })
     </button>
   </aside>
 </template>
+
+<style scoped>
+.detail-panel {
+  width: 100%;
+}
+</style>
