@@ -1,10 +1,10 @@
 <script setup>
-import { ref, computed, watch, watchEffect, provide, onMounted } from 'vue'
+import { ref, computed, watch, watchEffect, inject, onMounted, onActivated, onDeactivated } from 'vue'
+import { useRouter } from 'vue-router'
 import WeatherCompositionSection from './WeatherCompositionSection.vue'
 import WeatherCompositionSearchBar from './WeatherCompositionSearchBar.vue'
 import WeatherCompositionCard from './WeatherCompositionCard.vue'
 import WeatherCityList from './WeatherCityList.vue'
-import WeatherDetailPanel from './WeatherDetailPanel.vue'
 import WeatherCompositionFooter from './WeatherCompositionFooter.vue'
 import WeatherCompositionEmpty from './WeatherCompositionEmpty.vue'
 import '@/assets/weather-composition.css'
@@ -12,6 +12,8 @@ import '@/assets/weather-composition.css'
 // 디자인 참고 : Animated Weather Cards
 
 console.log('[lifecycle] WeatherComposition setup')
+
+const router = useRouter()
 
 // [1] 모든 반응형 데이터는 부모(WeatherComposition)에 유지
 const weatherList = ref([
@@ -39,12 +41,8 @@ const selectedCityInfo = ref(`${weatherList.value[0].name}이 선택되었습니
 const favoriteCityId = ref('city_01')
 const searchTryCount = ref(0)
 
-const themeMode = ref('light')
-const toggleTheme = () => {
-  themeMode.value = themeMode.value === 'light' ? 'dark' : 'light'
-}
-provide('themeMode', themeMode)
-provide('toggleTheme', toggleTheme)
+/* 테마는 App에서 provide — Composition/라우터 공통 사용 */
+const themeMode = inject('themeMode', ref('light'))
 
 const filteredWeatherList = computed(() => {
   const query = searchQuery.value.trim()
@@ -103,6 +101,15 @@ onMounted(() => {
   console.log('[lifecycle] WeatherComposition onMounted')
 })
 
+/* KeepAlive 시에도 검색 레일이 다른 라우트에 남지 않도록 */
+const railVisible = ref(true)
+onActivated(() => {
+  railVisible.value = true
+})
+onDeactivated(() => {
+  railVisible.value = false
+})
+
 watch(selectedCityInfo, (newInfo, oldInfo) => {
   console.log(`[watch] 상태바 문구 변경`)
   console.log(`  이전: "${oldInfo}"`)
@@ -134,46 +141,41 @@ const selectCity = (city) => {
   selectedCityInfo.value = `${city.name}이 선택되었습니다.`
 }
 
-const showDetail = (cityName, status) => {
-  window.alert(`${cityName}의 현재 날씨는 [${status}] 상태입니다.`)
+// [router] alert 대신 Programmatic Navigation
+const goDetail = (cityId) => {
+  const id = cityId || selectedCity.value?.id
+  if (!id) return
+  router.push('/weather/' + id)
 }
 
 const onUpdateQuery = (val) => {
   searchQuery.value = val
   searchTryCount.value += 1
 }
-
-const toggleFavorite = () => {
-  if (!selectedCity.value) return
-  favoriteCityId.value = selectedCity.value.id
-  selectedCityInfo.value = `${selectedCity.value.name}을(를) 즐겨찾기로 설정했습니다.`
-}
 </script>
 
 <template>
+  <!-- 검색은 App 좌측 레일로 Teleport (라우트와 같은 열) -->
+  <Teleport to="#weather-left-search-slot">
+    <div v-if="railVisible" class="weather-left-search" :class="themeMode">
+      <WeatherCompositionSection title="도시 검색">
+        <WeatherCompositionSearchBar
+          :current-query="searchQuery"
+          :result-label="searchResultLabel"
+          :hot-count="hotCityCount"
+          :try-count="searchTryCount"
+          :favorite-name="favoriteCity.name"
+          @update-query="onUpdateQuery"
+        />
+      </WeatherCompositionSection>
+    </div>
+  </Teleport>
+
   <div class="weather-composition" :class="themeMode">
     <div class="background">
       <div class="container" :class="[weatherType, themeMode]">
-        <!--
-          [2] WeatherCompositionSection + slot
-          부모가 SearchBar를 주입. Slot 안 자식도 부모와 props/emits로 직접 통신.
-        -->
-        <WeatherCompositionSection title="도시 검색">
-          <!-- [3] SearchBar: props / emits(update-query, toggle-theme) -->
-          <WeatherCompositionSearchBar
-            :current-query="searchQuery"
-            :result-label="searchResultLabel"
-            :hot-count="hotCityCount"
-            :try-count="searchTryCount"
-            :favorite-name="favoriteCity.name"
-            @update-query="onUpdateQuery"
-            @toggle-theme="toggleTheme"
-          />
-        </WeatherCompositionSection>
-
-        <!-- [2] 리스트/카드/상세를 slot으로 묶는 공통 섹션 -->
-        <WeatherCompositionSection title="지역별 날씨 현황">
-          <div class="layout" v-if="filteredWeatherList.length > 0 && selectedCity">
+        <WeatherCompositionSection title="지역별 날씨 현황" class="wc-main-section">
+          <div class="layout layout--home" v-if="filteredWeatherList.length > 0 && selectedCity">
             <WeatherCityList
               :cities="filteredWeatherList"
               :selected-id="selectedCity.id"
@@ -181,37 +183,23 @@ const toggleFavorite = () => {
             />
 
             <main class="panel">
-              <!-- [4] Card: props(city...) / emits(select-card, click-detail) -->
               <WeatherCompositionCard
                 :city="selectedCity"
                 :date-label="todayLabel"
                 :summary="weatherSummary"
                 :icon="weatherIcon"
                 @select-card="selectCity"
-                @click-detail="showDetail"
+                @click-detail="goDetail(selectedCity.id)"
               />
             </main>
-
-            <WeatherDetailPanel
-              :city="selectedCity"
-              :favorite-name="favoriteCity.name"
-              :date-label="todayLabel"
-              :summary="weatherSummary"
-              @toggle-favorite="toggleFavorite"
-            />
           </div>
 
-          <!-- [7] Empty 컴포넌트 추가 분리 -->
           <WeatherCompositionEmpty v-else />
         </WeatherCompositionSection>
 
-        <!-- [7] Footer(상태바+상세보기) 추가 분리 -->
         <WeatherCompositionFooter
           v-if="selectedCity"
           :message="selectedCityInfo"
-          :city-name="selectedCity.name"
-          :status="selectedCity.status"
-          @click-detail="showDetail"
         />
       </div>
     </div>

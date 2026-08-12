@@ -31,19 +31,24 @@ defineProps({
   background: var(--wc-panel-bg, rgba(255, 255, 255, 0.85));
   border: 1px solid var(--wc-border, rgba(0, 0, 0, 0.08));
   border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
+  padding: 12px 14px;
+  margin-bottom: 0;
   box-sizing: border-box;
 }
 
 .wc-section-title h3 {
-  margin: 0 0 10px;
-  font-size: 14px;
+  margin: 0 0 8px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--wc-muted, #666);
 }
 
 .wc-section-body {
   width: 100%;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 </style>
