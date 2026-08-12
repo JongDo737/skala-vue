@@ -88,6 +88,15 @@ body:has(.weather-app-shell.dark) {
   flex-shrink: 0;
 }
 
+.weather-app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .weather-app-header h1 {
   margin: 0 !important;
   font-size: 1.1rem !important;

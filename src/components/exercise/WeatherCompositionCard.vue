@@ -1,5 +1,6 @@
 <script setup>
-import { inject, onMounted, onUpdated, onUnmounted } from 'vue'
+import { computed, inject, onMounted, onUpdated, onUnmounted } from 'vue'
+import { useConfigStore } from '@/stores/configStore'
 import IconWeatherCard from '@/components/icons/IconWeatherCard.vue'
 
 // [lifecycle] : setup
@@ -39,6 +40,17 @@ const props = defineProps({
 
 const emit = defineEmits(['select-card', 'click-detail'])
 const themeMode = inject('themeMode', { value: 'light' })
+const configStore = useConfigStore()
+
+// [기존] 템플릿에서 city.temp + 'c' 고정 표시
+// [현재] configStore.unit 기준으로 섭씨/화씨 변환 후 unitSymbol 표시
+const displayTemp = computed(() => {
+  const rawTemp = props.city.temp // 원본은 섭씨
+  if (configStore.unit === 'fahrenheit') {
+    return Math.round((rawTemp * 9) / 5 + 32)
+  }
+  return rawTemp
+})
 
 onMounted(() => {
   console.log('[lifecycle] WeatherCompositionCard onMounted', props.city.name)
@@ -63,7 +75,7 @@ onUnmounted(() => {
     <IconWeatherCard />
 
     <div class="details">
-      <div class="temp">{{ city.temp }}<span>c</span></div>
+      <div class="temp">{{ displayTemp }}<span>{{ configStore.unitSymbol }}</span></div>
       <div class="right">
         <div class="date">{{ dateLabel }}</div>
         <div class="summary">{{ summary }}</div>

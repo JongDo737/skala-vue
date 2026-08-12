@@ -1,18 +1,31 @@
 <script setup>
 /**
  * [App] : 좌측(라우트+검색 슬롯) / 우측(RouterView)
- * 테마(light/dark)를 App에서 provide 해 라우터·내비까지 동일 적용
+ *
+ * [기존 테마]
+ *   const themeMode = ref('light')
+ *   const toggleTheme = () => { ... }
+ *   provide('themeMode', themeMode)
+ *   provide('toggleTheme', toggleTheme)
+ *
+ * [현재]
+ *   useConfigStore()의 themeMode / toggleTheme 사용
+ *   하위 컴포넌트 호환을 위해 provide는 유지 (inject('themeMode') 그대로 동작)
+ *
+ * UnitToggler: configStore.unit 토글 (섭씨/화씨)
  */
-import { ref, provide, computed } from 'vue'
+import { provide, computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useConfigStore } from '@/stores/configStore'
+import UnitToggler from '@/components/exercise/UnitToggler.vue'
 import '@/assets/weather-app.css'
 
-const themeMode = ref('light')
-const toggleTheme = () => {
-  themeMode.value = themeMode.value === 'light' ? 'dark' : 'light'
-}
+const configStore = useConfigStore()
+const { themeMode } = storeToRefs(configStore)
 
+// [기존] App 로컬 ref provide → [현재] Store 값을 provide (inject 하위 컴포넌트 유지)
 provide('themeMode', themeMode)
-provide('toggleTheme', toggleTheme)
+provide('toggleTheme', configStore.toggleTheme)
 
 const shellClass = computed(() => ['weather-app-shell', themeMode.value])
 </script>
@@ -21,9 +34,14 @@ const shellClass = computed(() => ['weather-app-shell', themeMode.value])
   <div :class="shellClass">
     <header class="weather-app-header">
       <h1>과제 4: 라우터적용</h1>
-      <button class="app-theme-btn" type="button" @click="toggleTheme">
-        {{ themeMode === 'light' ? '다크모드' : '라이트모드' }}
-      </button>
+      <div class="weather-app-header-actions">
+        <!-- 단위 토글 (Pinia configStore) -->
+        <UnitToggler />
+        <!-- 테마 토글 (Pinia configStore.themeMode) -->
+        <button class="app-theme-btn" type="button" @click="configStore.toggleTheme()">
+          {{ themeMode === 'light' ? '다크모드' : '라이트모드' }}
+        </button>
+      </div>
     </header>
 
     <div class="weather-split-body">
