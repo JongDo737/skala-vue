@@ -1,7 +1,19 @@
-<!-- [icon] : 날씨 카드용 SVG. 태양/구름/비 도형, 상위 .container.{type} 클래스로 스타일 변경 -->
+<!-- [icon] : 날씨 카드용 SVG. 낮=태양 / 밤(다크모드)=달, 구름·비 도형 포함 -->
 <template>
   <svg class="weather-card-svg" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+    <!-- 낮: 태양 -->
     <circle class="weather-sun" cx="150" cy="210" r="50" />
+
+    <!-- 밤: 흰색 초승달 (다크모드에서 표시) -->
+    <g class="weather-moon">
+      <path
+        class="weather-moon-path"
+        d="M168,160
+           a52,52 0 1,0 0,100
+           a40,40 0 1,1 0,-100
+           z"
+      />
+    </g>
 
     <g class="weather-cloud weather-cloud-3">
       <ellipse cx="70" cy="145" rx="48" ry="22" />

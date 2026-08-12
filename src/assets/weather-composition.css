@@ -225,6 +225,116 @@
   background-color: #dce9d8;
 }
 
+/* 다크모드: 카드 배경을 저녁 톤으로 */
+.weather-composition.dark .weather-card-shell {
+  background-color: #1a2238;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+}
+
+.weather-composition.dark .container.sun .weather-card-shell {
+  background-color: #243052;
+}
+
+.weather-composition.dark .container.rain .weather-card-shell {
+  background-color: #151a28;
+}
+
+.weather-composition.dark .container.cloud .weather-card-shell {
+  background-color: #1e2740;
+}
+
+.weather-composition.dark .container.wind .weather-card-shell {
+  background-color: #1a2a24;
+}
+
+.weather-composition.dark .weather-card-svg {
+  background: linear-gradient(
+    to bottom,
+    rgba(40, 60, 110, 0.55) 0%,
+    rgba(20, 28, 48, 0.1) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* 다크모드: 태양 숨기고 흰색 달 표시 */
+.weather-composition .weather-moon {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--wc-speed) ease,
+    transform var(--wc-speed) ease;
+}
+
+.weather-composition.dark .weather-sun {
+  opacity: 0 !important;
+}
+
+.weather-composition.dark .weather-moon {
+  opacity: 1;
+}
+
+.weather-composition.dark .container:not(.sun) .weather-moon {
+  opacity: 0.2;
+  transform: translateY(-36px);
+}
+
+.weather-composition.dark .container.sun .weather-moon {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.weather-composition .weather-moon-path {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.45));
+}
+
+.weather-composition.dark .weather-cloud-1 {
+  fill: #6b738c;
+}
+
+.weather-composition.dark .weather-cloud-2 {
+  fill: #555e78;
+}
+
+.weather-composition.dark .weather-cloud-3 {
+  fill: #434b63;
+}
+
+.weather-composition.dark .weather-rain-lines line {
+  stroke: #9ec5ff;
+}
+
+/* 다크모드: 카드 위 텍스트 */
+.weather-composition.dark .details {
+  color: #f2f5ff;
+}
+
+.weather-composition.dark .details .temp {
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.weather-composition.dark .details .temp span {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.weather-composition.dark .details .date,
+.weather-composition.dark .details .city-name {
+  color: rgba(230, 236, 255, 0.75);
+}
+
+.weather-composition.dark .details .summary {
+  color: #ffffff;
+}
+
+.weather-composition.dark .weather-icon-badge {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.weather-composition.dark .container.sun .weather-icon-badge {
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .weather-composition .weather-card-svg {
   width: 100%;
   height: 100%;
@@ -473,10 +583,6 @@
 .weather-composition.dark .status-bar {
   background: rgba(46, 125, 50, 0.25);
   color: #a5d6a7;
-}
-
-.weather-composition.dark .details {
-  color: #c8c8c8;
 }
 
 @keyframes wc-rain-fall {
