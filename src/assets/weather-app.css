@@ -104,22 +104,8 @@ body:has(.weather-app-shell.dark) {
   color: var(--app-text) !important;
 }
 
-.app-theme-btn {
-  flex-shrink: 0;
-  padding: 7px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--app-btn-border);
-  background: var(--app-btn-bg);
-  color: var(--app-text);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.app-theme-btn:hover {
-  border-color: var(--app-nav-active);
-  color: var(--app-nav-active);
-}
+/* [기존] .app-theme-btn — App 인라인 테마 버튼용
+   [리팩토링] ThemeToggler → ConfigToggler 스타일로 이동해 제거 */
 
 .weather-split-body {
   flex: 1;

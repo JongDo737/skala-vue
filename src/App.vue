@@ -2,22 +2,21 @@
 /**
  * [App] : 좌측(라우트+검색 슬롯) / 우측(RouterView)
  *
- * [기존 테마]
- *   const themeMode = ref('light')
- *   const toggleTheme = () => { ... }
- *   provide('themeMode', themeMode)
- *   provide('toggleTheme', toggleTheme)
+ * [기존]
+ * - 단위: UnitToggler 컴포넌트
+ * - 테마: App 인라인 <button> 또는 ThemeToggler 별도 파일
+ * → UI·파일이 겹침
  *
- * [현재]
- *   useConfigStore()의 themeMode / toggleTheme 사용
- *   하위 컴포넌트 호환을 위해 provide는 유지 (inject('themeMode') 그대로 동작)
- *
- * UnitToggler: configStore.unit 토글 (섭씨/화씨)
+ * [리팩토링]
+ * - ConfigToggler 한 파일 + 같은 버튼 디자인
+ * - type props 로 기능만 다르게 적용
+ *   <ConfigToggler type="unit" />
+ *   <ConfigToggler type="theme" />
  */
 import { provide, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useConfigStore } from '@/stores/configStore'
-import UnitToggler from '@/components/exercise/UnitToggler.vue'
+import ConfigToggler from '@/components/exercise/ConfigToggler.vue'
 import '@/assets/weather-app.css'
 
 const configStore = useConfigStore()
@@ -35,12 +34,8 @@ const shellClass = computed(() => ['weather-app-shell', themeMode.value])
     <header class="weather-app-header">
       <h1>과제 4: 라우터적용</h1>
       <div class="weather-app-header-actions">
-        <!-- 단위 토글 (Pinia configStore) -->
-        <UnitToggler />
-        <!-- 테마 토글 (Pinia configStore.themeMode) -->
-        <button class="app-theme-btn" type="button" @click="configStore.toggleTheme()">
-          {{ themeMode === 'light' ? '다크모드' : '라이트모드' }}
-        </button>
+        <ConfigToggler type="unit" />
+        <ConfigToggler type="theme" />
       </div>
     </header>
 
