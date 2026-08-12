@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, watchEffect, inject, onMounted, onActivated, onDeactivated } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import WeatherCompositionSection from './WeatherCompositionSection.vue'
 import WeatherCompositionSearchBar from './WeatherCompositionSearchBar.vue'
 import WeatherCompositionCard from './WeatherCompositionCard.vue'
@@ -9,11 +10,11 @@ import WeatherCompositionFooter from './WeatherCompositionFooter.vue'
 import WeatherCompositionEmpty from './WeatherCompositionEmpty.vue'
 import {
   createWeatherList,
-  DEFAULT_FAVORITE_CITY_ID,
   findCityById,
   formatTodayLabel,
   getWeatherMeta,
 } from '@/models/weatherModel.js'
+import { useFavoriteStore } from '@/stores/favoriteStore'
 import '@/assets/weather-composition.css'
 
 // 디자인 참고 : Animated Weather Cards
@@ -27,10 +28,14 @@ const weatherList = ref(createWeatherList())
 const searchQuery = ref('')
 const selectedCityId = ref(weatherList.value[0].id)
 const selectedCityInfo = ref(`${weatherList.value[0].name}이 선택되었습니다.`)
-const favoriteCityId = ref(DEFAULT_FAVORITE_CITY_ID)
 const searchTryCount = ref(0)
 
-/* 테마는 App에서 provide — Composition/라우터 공통 사용 */
+// [기존] const favoriteCityId = ref(DEFAULT_FAVORITE_CITY_ID)
+// [현재] favoriteStore로 메인/상세 즐겨찾기 공유
+const favoriteStore = useFavoriteStore()
+const { favoriteCityId, favoriteCity } = storeToRefs(favoriteStore)
+
+/* 테마: App provide ← configStore.themeMode (inject 유지) */
 const themeMode = inject('themeMode', ref('light'))
 
 const filteredWeatherList = computed(() => {
@@ -49,9 +54,8 @@ const hotCityCount = computed(() => {
   return filteredWeatherList.value.filter((item) => item.temp >= 25).length
 })
 
-const favoriteCity = computed(() => {
-  return findCityById(weatherList.value, favoriteCityId.value) || weatherList.value[0]
-})
+// [기존] favoriteCity = findCityById(weatherList, favoriteCityId) 로컬 computed
+// [현재] favoriteStore.favoriteCity 사용 (아래 storeToRefs)
 
 const selectedCity = computed(() => {
   return (

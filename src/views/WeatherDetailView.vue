@@ -5,16 +5,17 @@
  */
 import { computed, ref, watch, onMounted, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import WeatherCompositionCard from '../components/exercise/WeatherCompositionCard.vue'
 import WeatherDetailPanel from '../components/exercise/WeatherDetailPanel.vue'
 import WeatherCityList from '../components/exercise/WeatherCityList.vue'
 import {
   createWeatherList,
-  DEFAULT_FAVORITE_CITY_ID,
   findCityById,
   formatTodayLabel,
   getWeatherMeta,
 } from '@/models/weatherModel.js'
+import { useFavoriteStore } from '@/stores/favoriteStore'
 import '@/assets/weather-composition.css'
 
 const route = useRoute()
@@ -23,14 +24,14 @@ const themeMode = inject('themeMode', { value: 'light' })
 
 const weatherList = ref(createWeatherList())
 const selectedCityId = ref(route.params.cityId)
-const favoriteCityId = ref(DEFAULT_FAVORITE_CITY_ID)
 const statusMessage = ref('')
 
-const selectedCity = computed(() => findCityById(weatherList.value, selectedCityId.value))
+// [기존] const favoriteCityId = ref(DEFAULT_FAVORITE_CITY_ID) + 로컬 favoriteCity computed
+// [현재] favoriteStore 공유 — 홈에서 본 즐겨찾기와 상세가 동기화됨
+const favoriteStore = useFavoriteStore()
+const { favoriteCity } = storeToRefs(favoriteStore)
 
-const favoriteCity = computed(() => {
-  return findCityById(weatherList.value, favoriteCityId.value) || weatherList.value[0]
-})
+const selectedCity = computed(() => findCityById(weatherList.value, selectedCityId.value))
 
 const weatherMeta = computed(() => getWeatherMeta(selectedCity.value))
 const todayLabel = computed(() => formatTodayLabel())
@@ -53,7 +54,8 @@ const selectCity = (city) => {
 
 const toggleFavorite = () => {
   if (!selectedCity.value) return
-  favoriteCityId.value = selectedCity.value.id
+  // [기존] favoriteCityId.value = selectedCity.value.id
+  favoriteStore.setFavorite(selectedCity.value.id)
   statusMessage.value = `${selectedCity.value.name}을(를) 즐겨찾기로 설정했습니다.`
 }
 
