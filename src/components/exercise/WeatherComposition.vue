@@ -7,6 +7,13 @@ import WeatherCompositionCard from './WeatherCompositionCard.vue'
 import WeatherCityList from './WeatherCityList.vue'
 import WeatherCompositionFooter from './WeatherCompositionFooter.vue'
 import WeatherCompositionEmpty from './WeatherCompositionEmpty.vue'
+import {
+  createWeatherList,
+  DEFAULT_FAVORITE_CITY_ID,
+  findCityById,
+  formatTodayLabel,
+  getWeatherMeta,
+} from '@/models/weatherModel.js'
 import '@/assets/weather-composition.css'
 
 // 디자인 참고 : Animated Weather Cards
@@ -15,30 +22,12 @@ console.log('[lifecycle] WeatherComposition setup')
 
 const router = useRouter()
 
-// [1] 모든 반응형 데이터는 부모(WeatherComposition)에 유지
-const weatherList = ref([
-  { id: 'city_01', name: '서울', temp: 28, status: '맑음', humidity: 48, wind: 2.1 },
-  { id: 'city_02', name: '수원', temp: 24, status: '비', humidity: 82, wind: 3.4 },
-  { id: 'city_03', name: '부산', temp: 26, status: '구름', humidity: 61, wind: 4.0 },
-  { id: 'city_04', name: '인천', temp: 22, status: '비', humidity: 79, wind: 5.2 },
-  { id: 'city_05', name: '대전', temp: 20, status: '구름', humidity: 55, wind: 2.8 },
-  { id: 'city_06', name: '대구', temp: 24, status: '비', humidity: 74, wind: 3.1 },
-  { id: 'city_07', name: '광주', temp: 26, status: '구름', humidity: 58, wind: 2.5 },
-  { id: 'city_08', name: '울산', temp: 22, status: '비', humidity: 77, wind: 3.8 },
-  { id: 'city_09', name: '제주', temp: 19, status: '바람', humidity: 66, wind: 7.5 },
-])
-
-const statusMap = {
-  맑음: { type: 'sun', icon: 'wi-day-sunny', summary: 'Sunny' },
-  비: { type: 'rain', icon: 'wi-rain', summary: 'Rain' },
-  구름: { type: 'cloud', icon: 'wi-cloudy', summary: 'Cloudy' },
-  바람: { type: 'wind', icon: 'wi-strong-wind', summary: 'Windy' },
-}
-
+// [1] 반응형 상태 — 원본 데이터는 weatherModel에서 가져옴
+const weatherList = ref(createWeatherList())
 const searchQuery = ref('')
 const selectedCityId = ref(weatherList.value[0].id)
 const selectedCityInfo = ref(`${weatherList.value[0].name}이 선택되었습니다.`)
-const favoriteCityId = ref('city_01')
+const favoriteCityId = ref(DEFAULT_FAVORITE_CITY_ID)
 const searchTryCount = ref(0)
 
 /* 테마는 App에서 provide — Composition/라우터 공통 사용 */
@@ -61,7 +50,7 @@ const hotCityCount = computed(() => {
 })
 
 const favoriteCity = computed(() => {
-  return weatherList.value.find((item) => item.id === favoriteCityId.value) || weatherList.value[0]
+  return findCityById(weatherList.value, favoriteCityId.value) || weatherList.value[0]
 })
 
 const selectedCity = computed(() => {
@@ -72,30 +61,11 @@ const selectedCity = computed(() => {
   )
 })
 
-const weatherMeta = computed(() => {
-  if (!selectedCity.value) {
-    return { type: 'cloud', icon: 'wi-cloudy', summary: '' }
-  }
-  return (
-    statusMap[selectedCity.value.status] || {
-      type: 'cloud',
-      icon: 'wi-cloudy',
-      summary: selectedCity.value.status,
-    }
-  )
-})
-
+const weatherMeta = computed(() => getWeatherMeta(selectedCity.value))
 const weatherType = computed(() => weatherMeta.value.type)
 const weatherIcon = computed(() => weatherMeta.value.icon)
 const weatherSummary = computed(() => weatherMeta.value.summary)
-
-const todayLabel = computed(() =>
-  new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(new Date()),
-)
+const todayLabel = computed(() => formatTodayLabel())
 
 onMounted(() => {
   console.log('[lifecycle] WeatherComposition onMounted')
@@ -122,7 +92,7 @@ watchEffect(() => {
 })
 
 watch(selectedCityId, (newId) => {
-  const city = weatherList.value.find((item) => item.id === newId)
+  const city = findCityById(weatherList.value, newId)
   const isFavorite = newId === favoriteCityId.value
   console.log(
     `[watch] 선택 도시: ${city?.name ?? newId} / 즐겨찾기: ${isFavorite ? 'O' : 'X'}`,

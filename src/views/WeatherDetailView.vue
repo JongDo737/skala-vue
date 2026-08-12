@@ -8,68 +8,37 @@ import { useRoute, useRouter } from 'vue-router'
 import WeatherCompositionCard from '../components/exercise/WeatherCompositionCard.vue'
 import WeatherDetailPanel from '../components/exercise/WeatherDetailPanel.vue'
 import WeatherCityList from '../components/exercise/WeatherCityList.vue'
+import {
+  createWeatherList,
+  DEFAULT_FAVORITE_CITY_ID,
+  findCityById,
+  formatTodayLabel,
+  getWeatherMeta,
+} from '@/models/weatherModel.js'
 import '@/assets/weather-composition.css'
 
 const route = useRoute()
 const router = useRouter()
 const themeMode = inject('themeMode', { value: 'light' })
 
-const weatherList = ref([
-  { id: 'city_01', name: '서울', temp: 28, status: '맑음', humidity: 48, wind: 2.1 },
-  { id: 'city_02', name: '수원', temp: 24, status: '비', humidity: 82, wind: 3.4 },
-  { id: 'city_03', name: '부산', temp: 26, status: '구름', humidity: 61, wind: 4.0 },
-  { id: 'city_04', name: '인천', temp: 22, status: '비', humidity: 79, wind: 5.2 },
-  { id: 'city_05', name: '대전', temp: 20, status: '구름', humidity: 55, wind: 2.8 },
-  { id: 'city_06', name: '대구', temp: 24, status: '비', humidity: 74, wind: 3.1 },
-  { id: 'city_07', name: '광주', temp: 26, status: '구름', humidity: 58, wind: 2.5 },
-  { id: 'city_08', name: '울산', temp: 22, status: '비', humidity: 77, wind: 3.8 },
-  { id: 'city_09', name: '제주', temp: 19, status: '바람', humidity: 66, wind: 7.5 },
-])
-
-const statusMap = {
-  맑음: { type: 'sun', icon: 'wi-day-sunny', summary: 'Sunny' },
-  비: { type: 'rain', icon: 'wi-rain', summary: 'Rain' },
-  구름: { type: 'cloud', icon: 'wi-cloudy', summary: 'Cloudy' },
-  바람: { type: 'wind', icon: 'wi-strong-wind', summary: 'Windy' },
-}
-
+const weatherList = ref(createWeatherList())
 const selectedCityId = ref(route.params.cityId)
-const favoriteCityId = ref('city_01')
+const favoriteCityId = ref(DEFAULT_FAVORITE_CITY_ID)
 const statusMessage = ref('')
 
-const selectedCity = computed(() => {
-  return weatherList.value.find((item) => item.id === selectedCityId.value) || null
-})
+const selectedCity = computed(() => findCityById(weatherList.value, selectedCityId.value))
 
 const favoriteCity = computed(() => {
-  return weatherList.value.find((item) => item.id === favoriteCityId.value) || weatherList.value[0]
+  return findCityById(weatherList.value, favoriteCityId.value) || weatherList.value[0]
 })
 
-const weatherMeta = computed(() => {
-  if (!selectedCity.value) {
-    return { type: 'cloud', icon: 'wi-cloudy', summary: '' }
-  }
-  return (
-    statusMap[selectedCity.value.status] || {
-      type: 'cloud',
-      icon: 'wi-cloudy',
-      summary: selectedCity.value.status,
-    }
-  )
-})
-
-const todayLabel = computed(() =>
-  new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(new Date()),
-)
+const weatherMeta = computed(() => getWeatherMeta(selectedCity.value))
+const todayLabel = computed(() => formatTodayLabel())
 
 const syncFromRoute = () => {
   const id = route.params.cityId
   selectedCityId.value = id
-  const city = weatherList.value.find((item) => item.id === id)
+  const city = findCityById(weatherList.value, id)
   statusMessage.value = city ? `${city.name}이 선택되었습니다.` : '도시 정보를 찾을 수 없습니다.'
 }
 
