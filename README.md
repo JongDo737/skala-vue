@@ -35,8 +35,6 @@ cp .env.example .env
 VITE_OPENWEATHER_API_KEY=발급받은_키
 ```
 
-
-
 ### 3) 개발 서버
 
 ```bash
@@ -45,22 +43,20 @@ npm run dev
 
 ---
 
-
-
 ## 화면 스크린샷
 
 
 | 화면     | 이미지 |
 | ------ | --- |
-| 홈 대시보드 | <img width="1348" height="599" alt="스크린샷 2026-08-12 오후 7 15 52" src="https://github.com/user-attachments/assets/864e6f25-2d91-40f9-a3c0-66bf528c8006" />  |
-| 검색 추천  | <img width="225" height="373" alt="스크린샷 2026-08-12 오후 7 15 35" src="https://github.com/user-attachments/assets/1285b91e-2cc3-45c0-9ccf-add5ba8805e4" />  |
-| 상세 페이지 | <img width="1349" height="599" alt="스크린샷 2026-08-12 오후 7 15 59" src="https://github.com/user-attachments/assets/4e3ea2b5-a1bb-466c-88a9-d988a9eebba5" />  |
-| 다크모드   | <img width="1347" height="597" alt="스크린샷 2026-08-12 오후 7 16 07" src="https://github.com/user-attachments/assets/461337b6-dd24-40c3-b454-6cb9190bf4c6" />  |
+| 홈 대시보드 |     |
+| 검색 추천  |     |
+| 상세 페이지 |     |
+| 다크모드   |     |
 
+
+참고 디자인 : 
 
 ---
-
-
 
 ## 파일 구조
 
@@ -123,8 +119,6 @@ npm run dev
 
 ---
 
-
-
 ## 구현 기능
 
 - 도시 목록 `v-for` 렌더링 (`:key="id"`)
@@ -144,96 +138,7 @@ npm run dev
 
 
 
-## 과제 체크리스트
-
-
-
-### Hands-on 1 (기초: v-for / v-if / 입력 / 이벤트)
-
-- [x] 배열 렌더링 (`v-for`) + `:key`에 id 바인딩  
-  → `WeatherCityList.vue`
-- [x] 조건부 렌더링 (`v-if`) 체감 라벨 (더움 / 선선함)  
-  → `WeatherDetailPanel.vue`
-- [x] 양방향에 해당하는 검색 입력 (`:value`, `@input`) + 한글 검색  
-  → `WeatherCompositionSearchBar.vue`  
-- [x] 카드 클릭 시 상태바 `"{도시}이 선택되었습니다."`
-- [x] 상세보기 버튼 버블링 방지 (`@click.stop`)  
-- [x] 본인 Mockup 추가 (`WeatherMockup.vue` 등)
-
-
-
-### Hands-on 2 (Composition: ref / computed / watch)
-
-- [x] `searchQuery`, 선택 상태, 날씨 목록 반응형 관리  
-  → 현재는 API + `weatherStore`로 확장
-- [x] 검색/필터 로직 (`computed` 등)  
-- [x] `watch(selectedCityInfo/statusMessage)` 콘솔 로그
-- [x] `watchEffect`로 검색어 추적 로그
-- [x] 결과 없음 안내 (`WeatherCompositionEmpty`)
-- [x] 추가 반응형/Computed/Watcher (추천 debounce, 캐시 여부 등)
-
-
-
-### Hands-on 3 (Component 분리)
-
-- [x] `WeatherParent.vue` — 반응형 데이터 유지
-- [x] `BaseDashboardCard.vue` — slot 공통 레이아웃
-- [x] `SearchBar.vue` — props / `update-query` emits
-- [x] `WeatherCard.vue` — props / `select-card`, `click-detail` emits
-- [x] 컴포넌트별 `<style scoped>`
-- [x] 추가 분리 — Composition 계열 (`WeatherComposition*`, `WeatherCityList`, `WeatherDetailPanel` 등)
-
-
-
-### Hands-on 4 (Router)
-
-- [x] Lazy Loading + Catch-all Route
-- [x] `App.vue` — `RouterLink` + `RouterView` (+ `KeepAlive`)
-- [x] `WeatherHomeView` — 메인 대시보드  
-- [x] 상세보기 `router.push('/weather/' + id)` (alert 제거)
-- [x] `WeatherDetailView` — `:cityId` 동적 매칭  
-- [x] `WeatherAboutView`
-- [x] 추가 view — `WeatherGuideView` (`/guide`)
-
-
-
-### Hands-on 5 (Pinia)
-
-- [x] `configStore`: `unit` / `unitSymbol` / `toggleUnit`
-- [x] 대시보드 상단 단위 토글 UI  
-- [x] 메인/상세 `displayTemp` 단위 반영
-- [x] 추가 Store — `favoriteStore`, `weatherStore`, `configStore.themeMode`
-
-
-
-### Hands-on 6 (Axios / 외부 API)
-
-- [x] Axios 설치 및 `httpService` 모듈화
-- [x] OpenWeather **Current Weather** 적용
-- [x] OpenWeather **Geocoding** (검색 추천 / reverse)
-- [x] 기타 — 브라우저 **Geolocation** (현재 위치)
-
-
-
-### Hands-on 7 (외부 UI Library)
-
-- [x] Element Plus 설치 및 `main.js` 전역 등록  
-
-
-
-### Source 품질 / Build
-
-- [ ] ESLint Error 0 확인 후 제출 (`npm run lint`)
-- [x] API 키 `.env` 관리 + `.gitignore` 제외 (`.env.example` 제공)
-- [ ] `npm run build` 후 본인 서버 호스팅 확인
-
----
-
-
-
 ## 수업 Q&A (교수님께 질문한 내용)
-
-
 
 ### 1) `ref`를 `const`로 선언하는 이유
 
@@ -246,8 +151,6 @@ npm run dev
 
 ---
 
-
-
 ### 2) JWT를 비정상 사용자에게 즉시 비활성화할 수 있는지
 
 **질문**  
@@ -259,8 +162,6 @@ JWT는 클라이언트에 제공되는데, 비정상 사용자라면 토큰을 �
 JWT 특성상 **즉시 대응하기엔 무리가 있는 시스템**이다.
 
 ---
-
-
 
 ### 3) 양방향 바인딩(`v-model`)에 대한 생각
 
@@ -277,8 +178,6 @@ JWT 특성상 **즉시 대응하기엔 무리가 있는 시스템**이다.
 
 ---
 
-
-
 ### 4) 실무에서 Body/데이터를 항상 암호화하는지
 
 **질문**  
@@ -291,45 +190,52 @@ JWT 특성상 **즉시 대응하기엔 무리가 있는 시스템**이다.
 
 ---
 
-
-
 ## 어려웠던 점과 트러블슈팅
-
-
 
 ### 1) 한글 검색과 `v-model`
 
-`v-model`로 검색을 묶어 보니, 한글 IME 조합 중에 값이 어중간하게 올라가거나 추천 API가 너무 자주 나갔습니다.  
-과제 요구인 `:value` **+** `@input` 으로 되돌리고, Geocoding은 **debounce(280ms)** 로 호출 횟수를 줄였습니다.
+처음에는 검색 input에 `v-model`을 걸어서 부모 `ref(searchQuery)`와 바로 묶었습니다.  
+한글 IME로 “서울”을 칠 때 조합 중간 값이 `searchQuery`에 계속 올라가서, 자식 `emits('update-query')` → 부모 `onUpdateQuery` → Axios `get` (Geocoding)이 글자마다 나갔습니다.
+
+그래서 `WeatherCompositionSearchBar`는 `v-model` 대신 `:value="currentQuery"` + `@input`으로 바꿨습니다.  
+부모는 `props`로 내려주고, 입력값은 `emits`로만 올립니다.  
+추천 호출은 `WeatherComposition`에서 `setTimeout` / `clearTimeout`으로 약 280ms 뒤에 `buildSuggestions`가 돌게 해서, Axios 요청 횟수를 줄였습니다.
 
 ### 2) 상세 진입 시 API가 한 번 더 나감
 
-홈에서 이미 받아 둔 도시를 상세에서 `fetchWeatherById`로 다시 불렀습니다.  
-`weatherStore`에 첫 응답을 저장하고, 상세는 **캐시 hit 시 API 생략**하도록 바꿨습니다.
+홈(`WeatherComposition`)에서 받은 도시를 Pinia `weatherStore.saveCity`로 넣어 두었는데도,  
+상세(`WeatherDetailView`)에 들어가면 `useRoute().params.cityId`를 `watch` / `onMounted`로 보고 `fetchWeatherById`를 또 호출했습니다.
+
+그래서 Store에 `resolveCityForDetail`을 두고, `storeToRefs`로 쓰는 `cities`에 이미 있으면 Axios를 생략하고, 없을 때만 `fetchWeatherById`를 타게 바꿨습니다.  
+뷰는 `await weatherStore.resolveCityForDetail(cityId)`만 호출하면 됩니다.
 
 ### 3) 카드 문구가 전부 Cloudy처럼 보임
 
-`summary`를 영문 고정 매핑(`Cloudy`)만 쓰고 있었습니다.  
-OpenWeather `lang=kr`의 `description` 과 **icon 코드**로 상태를 판별·표시하도록 수정했습니다.
+카드 문구를 `computed(() => getWeatherMeta(selectedCity))`로 뽑고 있었는데,  
+안에서 영문 `main`만 보고 `Cloudy` 같은 고정 문자열을 넣고 있었습니다.  
+그래서 템플릿 `{{ summary }}` / `{{ description }}`이 전부 비슷해 보였습니다.
+
+Axios 요청 파라미터에 `lang: 'kr'`를 넣고, 응답의 `weather[0].description`과 `icon`을 `mapWeatherMain`에서 쓰도록 고쳤습니다.  
+화면에는 그 결과를 `props`로 카드·패널에 내려 `v-if` / 바인딩으로 표시합니다.
 
 ### 4) 도시명이 영어로 저장/표시됨
 
-API `name`이 영어인 경우가 많아 (예: Hawaii) 목록·상세가 영문으로 남았습니다.  
-`cityMapping` + **reverse geocoding(**`local_names.ko`**)** 으로 한글 표시명을 보정했습니다.
+OpenWeather 응답의 `name`이 `Hawaii`처럼 영어인 경우가 많아,  
+`v-for`로 그리는 `WeatherCityList`와 상세 패널 `props.city.name`이 영문으로 남았습니다.
+
+`cityMapping`의 `toKoreanCityName`으로 먼저 맞추고, 안 되면 Axios로 Reverse Geocoding을 한 뒤 `local_names.ko`를 `name`에 넣습니다.  
+그 city 객체를 Pinia에 저장하면, 홈·상세가 같은 `storeToRefs` 상태를 쓰니 한글 표시가 같이 맞춰집니다.
 
 ### 5) `alert` vs 라우터
 
-1일차 과제는 `window.alert`였지만, 라우터 과제와 겹치고 UX가 끊겨  
-`@click.stop`은 유지한 채 동작만 `router.push` 로 바꿨습니다.
+Hands-on 1에서는 상세 버튼에 `@click.stop` + `window.alert`를 썼습니다.  
+Router 과제에서는 같은 버튼에서 `useRouter()`의 `router.push('/weather/' + id)`로 바꾸었습니다.
 
-### 6) API 키 하드코딩
-
-실습 중에는 코드에 키를 두었으나, 제출 기준에 맞춰  
-`.env` **+** `import.meta.env.VITE_OPENWEATHER_API_KEY` 로 옮기고 `.gitignore`에 `.env`를 넣었습니다.
+`@click.stop`은 그대로 두어 카드 전체 `@click`(선택/`emits`)과 겹치지 않게 했고,  
+이동만 Vue Router programmatic navigation으로 처리했습니다.  
+상세 쪽은 `App.vue`의 `RouterView` + `KeepAlive` 안에 들어가서, 필요하면 캐시된 뷰를 다시 씁니다.
 
 ---
-
-
 
 ## 사용한 OpenWeather API 요약
 
@@ -345,8 +251,6 @@ API `name`이 영어인 경우가 많아 (예: Hawaii) 목록·상세가 영문�
 호출: `weatherService` → `httpService.get()`
 
 ---
-
-
 
 ## 참고
 
