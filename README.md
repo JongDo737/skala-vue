@@ -47,6 +47,21 @@ npm run dev
 
 
 
+## 화면 스크린샷
+
+
+| 화면     | 이미지 |
+| ------ | --- |
+| 홈 대시보드 | <img width="1348" height="599" alt="스크린샷 2026-08-12 오후 7 15 52" src="https://github.com/user-attachments/assets/864e6f25-2d91-40f9-a3c0-66bf528c8006" />  |
+| 검색 추천  | <img width="225" height="373" alt="스크린샷 2026-08-12 오후 7 15 35" src="https://github.com/user-attachments/assets/1285b91e-2cc3-45c0-9ccf-add5ba8805e4" />  |
+| 상세 페이지 | <img width="1349" height="599" alt="스크린샷 2026-08-12 오후 7 15 59" src="https://github.com/user-attachments/assets/4e3ea2b5-a1bb-466c-88a9-d988a9eebba5" />  |
+| 다크모드   | <img width="1347" height="597" alt="스크린샷 2026-08-12 오후 7 16 07" src="https://github.com/user-attachments/assets/461337b6-dd24-40c3-b454-6cb9190bf4c6" />  |
+
+
+---
+
+
+
 ## 파일 구조
 
 ```text
@@ -105,21 +120,6 @@ npm run dev
         ├── WeatherGuideView.vue     # /guide
         └── NotFoundView.vue         # Catch-all
 ```
-
----
-
-
-
-## 화면 스크린샷
-
-
-| 화면     | 이미지 |
-| ------ | --- |
-| 홈 대시보드 | 홈   |
-| 검색 추천  | 검색  |
-| 상세 페이지 | 상세  |
-| 다크모드   | 다크  |
-
 
 ---
 
