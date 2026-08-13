@@ -5,6 +5,8 @@ import { useConfigStore } from '@/stores/configStore'
 /**
  * [props] : city, favoriteName, dateLabel, summary
  * [emits] : toggle-favorite
+ *
+ * 상세 필드는 OpenWeather API(main/wind/clouds/visibility …) 기준으로 표시
  */
 const props = defineProps({
   city: {
@@ -29,14 +31,26 @@ const emit = defineEmits(['toggle-favorite'])
 const themeMode = inject('themeMode', { value: 'light' })
 const configStore = useConfigStore()
 
-// [기존] {{ city.temp }}°C 고정
-// [현재] configStore 단위에 맞춰 displayTemp + unitSymbol
-const displayTemp = computed(() => {
-  const rawTemp = props.city.temp // 원본은 섭씨
+const toDisplayTemp = (celsius) => {
+  const raw = Number(celsius) || 0
   if (configStore.unit === 'fahrenheit') {
-    return Math.round((rawTemp * 9) / 5 + 32)
+    return Math.round((raw * 9) / 5 + 32)
   }
-  return rawTemp
+  return Math.round(raw)
+}
+
+const displayTemp = computed(() => toDisplayTemp(props.city.temp))
+
+const visibilityKm = computed(() => {
+  const meters = props.city.visibility
+  if (meters == null) return '-'
+  return `${(meters / 1000).toFixed(1)} km`
+})
+
+const windDegText = computed(() => {
+  const deg = props.city.windDeg
+  if (deg == null) return '-'
+  return `${deg}°`
 })
 </script>
 
@@ -49,12 +63,16 @@ const displayTemp = computed(() => {
         <dd>{{ city.name }}</dd>
       </div>
       <div>
+        <dt>국가</dt>
+        <dd>{{ city.country || '-' }}</dd>
+      </div>
+      <div>
         <dt>날짜</dt>
         <dd>{{ dateLabel }}</dd>
       </div>
       <div>
         <dt>날씨</dt>
-        <dd>{{ city.status }} ({{ summary }})</dd>
+        <dd>{{ city.description || city.status }}</dd>
       </div>
       <div>
         <dt>기온</dt>
@@ -65,20 +83,31 @@ const displayTemp = computed(() => {
         <dd>{{ city.humidity }}%</dd>
       </div>
       <div>
+        <dt>기압</dt>
+        <dd>{{ city.pressure ?? '-' }} hPa</dd>
+      </div>
+      <div>
         <dt>풍속</dt>
         <dd>{{ city.wind }} m/s</dd>
       </div>
       <div>
-        <dt>체감</dt>
-        <dd>
-          <!-- 체감 기준은 원본 섭씨 온도 기준 유지 -->
-          <span v-if="city.temp >= 25" class="badge hot">더움 (25도 이상)</span>
-          <span v-else class="badge cool">선선함 (25도 미만)</span>
-        </dd>
+        <dt>풍향</dt>
+        <dd>{{ windDegText }}</dd>
       </div>
       <div>
-        <dt>즐겨찾기</dt>
-        <dd>{{ favoriteName }}</dd>
+        <dt>구름량</dt>
+        <dd>{{ city.clouds ?? '-' }}%</dd>
+      </div>
+      <div>
+        <dt>가시거리</dt>
+        <dd>{{ visibilityKm }}</dd>
+      </div>
+      <div>
+        <dt>체감</dt>
+        <dd>
+          <span v-if="city.temp >= 25" class="badge hot">더움 (25℃ 이상)</span>
+          <span v-else class="badge cool">선선함 (25℃ 미만)</span>
+        </dd>
       </div>
     </dl>
 

@@ -79,7 +79,7 @@ onUnmounted(() => {
       <div class="right">
         <div class="date">{{ dateLabel }}</div>
         <div class="summary">{{ summary }}</div>
-        <div class="city-name">{{ city.name }} / {{ city.status }}</div>
+        <div class="city-name">{{ city.name }} / {{ city.description || city.status }}</div>
       </div>
     </div>
 
@@ -91,6 +91,8 @@ onUnmounted(() => {
       type="button"
       @click.stop="emit('click-detail', city.name, city.status)"
     >
+      <!-- @click.stop: 카드 select-card 버블링 방지 (과제 이벤트 수식어 요구) -->
+      <!-- 상세 동작은 부모에서 alert → router.push 로 개선 -->
       {{ detailButtonLabel }}
     </button>
   </div>

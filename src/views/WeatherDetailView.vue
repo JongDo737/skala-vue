@@ -1,7 +1,7 @@
 <script setup>
 /**
  * [view] : /weather/:cityId
- * 기존 wd-panel 디자인 제거 → Composition 카드 + 상세 정보 패널
+ * weatherStore 캐시 우선 — 홈에서 이미 받은 도시는 API 재호출 없음
  */
 import { computed, ref, watch, onMounted, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -9,53 +9,56 @@ import { storeToRefs } from 'pinia'
 import WeatherCompositionCard from '../components/exercise/WeatherCompositionCard.vue'
 import WeatherDetailPanel from '../components/exercise/WeatherDetailPanel.vue'
 import WeatherCityList from '../components/exercise/WeatherCityList.vue'
-import {
-  createWeatherList,
-  findCityById,
-  formatTodayLabel,
-  getWeatherMeta,
-} from '@/models/weatherModel.js'
+import { formatTodayLabel, getWeatherMeta } from '@/models/weatherModel.js'
 import { useFavoriteStore } from '@/stores/favoriteStore'
+import { useWeatherStore } from '@/stores/weatherStore'
 import '@/assets/weather-composition.css'
 
 const route = useRoute()
 const router = useRouter()
 const themeMode = inject('themeMode', { value: 'light' })
 
-const weatherList = ref(createWeatherList())
-const selectedCityId = ref(route.params.cityId)
-const statusMessage = ref('')
+const weatherStore = useWeatherStore()
+const { cities: weatherList, selectedCity, statusMessage } = storeToRefs(weatherStore)
 
-// [기존] const favoriteCityId = ref(DEFAULT_FAVORITE_CITY_ID) + 로컬 favoriteCity computed
-// [현재] favoriteStore 공유 — 홈에서 본 즐겨찾기와 상세가 동기화됨
+const isLoading = ref(false)
+const loadError = ref('')
+
 const favoriteStore = useFavoriteStore()
 const { favoriteCity } = storeToRefs(favoriteStore)
-
-const selectedCity = computed(() => findCityById(weatherList.value, selectedCityId.value))
 
 const weatherMeta = computed(() => getWeatherMeta(selectedCity.value))
 const todayLabel = computed(() => formatTodayLabel())
 
-const syncFromRoute = () => {
-  const id = route.params.cityId
-  selectedCityId.value = id
-  const city = findCityById(weatherList.value, id)
-  statusMessage.value = city ? `${city.name}이 선택되었습니다.` : '도시 정보를 찾을 수 없습니다.'
+const syncCity = async (cityId) => {
+  if (!cityId) return
+  isLoading.value = true
+  loadError.value = ''
+
+  const result = await weatherStore.resolveCityForDetail(cityId)
+  if (result.error && !result.city) {
+    loadError.value = result.error
+  } else if (result.fromCache) {
+    statusMessage.value = `${result.city.name}이 선택되었습니다.`
+  }
+
+  isLoading.value = false
 }
 
-onMounted(syncFromRoute)
-watch(() => route.params.cityId, syncFromRoute)
+onMounted(() => syncCity(route.params.cityId))
+watch(
+  () => route.params.cityId,
+  (id) => syncCity(id),
+)
 
 const selectCity = (city) => {
-  selectedCityId.value = city.id
-  statusMessage.value = `${city.name}이 선택되었습니다.`
+  weatherStore.selectCity(city)
   router.push('/weather/' + city.id)
 }
 
 const toggleFavorite = () => {
   if (!selectedCity.value) return
-  // [기존] favoriteCityId.value = selectedCity.value.id
-  favoriteStore.setFavorite(selectedCity.value.id)
+  favoriteStore.setFavorite(selectedCity.value)
   statusMessage.value = `${selectedCity.value.name}을(를) 즐겨찾기로 설정했습니다.`
 }
 
@@ -113,7 +116,7 @@ const goHome = () => {
       </div>
 
       <div v-else class="layout-empty">
-        <p>cityId에 해당하는 도시가 없습니다.</p>
+        <p>{{ isLoading ? '불러오는 중...' : loadError || statusMessage }}</p>
         <button class="wc-back-btn" type="button" @click="goHome">대시보드로</button>
       </div>
     </div>

@@ -2,38 +2,42 @@
 import { inject } from 'vue'
 
 /**
- * [props] : currentQuery, resultLabel, hotCount, tryCount, favoriteName
- * [emits] : update-query — 검색어를 부모에게 전달
+ * [props] currentQuery, suggestions, isSuggestLoading
+ * [emits] update-query, select-suggestion
+ *
+ * [검색 입력 바인딩]
+ * v-model 을 써 보려 했으나, 한글 IME 조합 중 값이 어중간하게 반영되거나
+ * 부모 필터/추천 API가 조합 중간마다 과도하게 돌 수 있어
+ * 과제 요구(:value + @input) 방식 유지로 안정화함.
+ *
+ * [기존] resultLabel / hotCount / tryCount / favoriteName 힌트 문구 표시
+ * [현재] 검색 입력 + 추천 목록만 표시
  */
 defineProps({
   currentQuery: {
     type: String,
     default: '',
   },
-  resultLabel: {
-    type: String,
-    default: '',
+  suggestions: {
+    type: Array,
+    default: () => [],
   },
-  hotCount: {
-    type: Number,
-    default: 0,
-  },
-  tryCount: {
-    type: Number,
-    default: 0,
-  },
-  favoriteName: {
-    type: String,
-    default: '',
+  isSuggestLoading: {
+    type: Boolean,
+    default: false,
   },
 })
 
-const emit = defineEmits(['update-query'])
+const emit = defineEmits(['update-query', 'select-suggestion'])
 
 const themeMode = inject('themeMode', { value: 'light' })
 
 const onInput = (event) => {
   emit('update-query', event.target.value)
+}
+
+const onPick = (item) => {
+  emit('select-suggestion', item)
 }
 </script>
 
@@ -44,16 +48,23 @@ const onInput = (event) => {
         type="text"
         :value="currentQuery"
         @input="onInput"
-        placeholder="도시 검색"
+        placeholder="도시 검색 (한글/영문)"
+        autocomplete="off"
       />
     </div>
-    <p class="wc-search-hint">
-      검색: <strong>{{ currentQuery || '전체' }}</strong>
-      · {{ resultLabel }}
-      · 더운 도시 {{ hotCount }}개
-      · 입력 횟수 {{ tryCount }}
-    </p>
-    <p class="wc-search-hint">즐겨찾기: {{ favoriteName }}</p>
+
+    <ul v-if="suggestions.length > 0" class="wc-suggest-list">
+      <li
+        v-for="(item, index) in suggestions"
+        :key="`${item.en}-${item.lat}-${index}`"
+        class="wc-suggest-item"
+        @click="onPick(item)"
+      >
+        <span class="wc-suggest-name">{{ item.name }}</span>
+        <span class="wc-suggest-meta">{{ item.label || item.en }}</span>
+      </li>
+    </ul>
+    <p v-else-if="isSuggestLoading" class="wc-search-hint">도시 검색 중...</p>
   </div>
 </template>
 
@@ -75,6 +86,46 @@ const onInput = (event) => {
   font-family: inherit;
   background: var(--wc-input-bg, rgba(255, 255, 255, 0.85));
   color: var(--wc-text, #333);
+}
+
+.wc-suggest-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 1px solid var(--wc-border, rgba(0, 0, 0, 0.08));
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--wc-panel-bg, rgba(255, 255, 255, 0.95));
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.wc-suggest-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--wc-border, rgba(0, 0, 0, 0.06));
+}
+
+.wc-suggest-item:last-child {
+  border-bottom: none;
+}
+
+.wc-suggest-item:hover {
+  background: rgba(68, 68, 255, 0.08);
+}
+
+.wc-suggest-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wc-text, #333);
+}
+
+.wc-suggest-meta {
+  font-size: 11px;
+  color: var(--wc-muted, #666);
 }
 
 .wc-search-hint {

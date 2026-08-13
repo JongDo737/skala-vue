@@ -1,5 +1,14 @@
 <script setup>
-import { ref, computed, watch, watchEffect, inject, onMounted, onActivated, onDeactivated } from 'vue'
+import {
+  ref,
+  computed,
+  watch,
+  watchEffect,
+  inject,
+  onMounted,
+  onActivated,
+  onDeactivated,
+} from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import WeatherCompositionSection from './WeatherCompositionSection.vue'
@@ -8,62 +17,36 @@ import WeatherCompositionCard from './WeatherCompositionCard.vue'
 import WeatherCityList from './WeatherCityList.vue'
 import WeatherCompositionFooter from './WeatherCompositionFooter.vue'
 import WeatherCompositionEmpty from './WeatherCompositionEmpty.vue'
+import { formatTodayLabel, getWeatherMeta } from '@/models/weatherModel.js'
+import { filterMappedCities } from '@/models/cityMapping.js'
 import {
-  createWeatherList,
-  findCityById,
-  formatTodayLabel,
-  getWeatherMeta,
-} from '@/models/weatherModel.js'
+  fetchWeatherByCityName,
+  fetchWeatherByCoords,
+  fetchWeatherForCurrentLocation,
+  searchGeoCities,
+} from '@/services/weatherService.js'
 import { useFavoriteStore } from '@/stores/favoriteStore'
+import { useWeatherStore } from '@/stores/weatherStore'
 import '@/assets/weather-composition.css'
-
-// 디자인 참고 : Animated Weather Cards
 
 console.log('[lifecycle] WeatherComposition setup')
 
 const router = useRouter()
+const weatherStore = useWeatherStore()
+const { cities: weatherList, selectedCityId, statusMessage, selectedCity } =
+  storeToRefs(weatherStore)
 
-// [1] 반응형 상태 — 원본 데이터는 weatherModel에서 가져옴
-const weatherList = ref(createWeatherList())
 const searchQuery = ref('')
-const selectedCityId = ref(weatherList.value[0].id)
-const selectedCityInfo = ref(`${weatherList.value[0].name}이 선택되었습니다.`)
-const searchTryCount = ref(0)
+const isLoading = ref(false)
+const loadError = ref('')
+const suggestions = ref([])
+const isSuggestLoading = ref(false)
+let suggestTimer = null
 
-// [기존] const favoriteCityId = ref(DEFAULT_FAVORITE_CITY_ID)
-// [현재] favoriteStore로 메인/상세 즐겨찾기 공유
 const favoriteStore = useFavoriteStore()
-const { favoriteCityId, favoriteCity } = storeToRefs(favoriteStore)
+const { favoriteCityId } = storeToRefs(favoriteStore)
 
-/* 테마: App provide ← configStore.themeMode (inject 유지) */
 const themeMode = inject('themeMode', ref('light'))
-
-const filteredWeatherList = computed(() => {
-  const query = searchQuery.value.trim()
-  if (!query) return weatherList.value
-  return weatherList.value.filter((item) => item.name.includes(query))
-})
-
-const searchResultLabel = computed(() => {
-  const query = searchQuery.value.trim()
-  if (!query) return `전체 ${weatherList.value.length}개 도시`
-  return `"${query}" 검색 결과 ${filteredWeatherList.value.length}개`
-})
-
-const hotCityCount = computed(() => {
-  return filteredWeatherList.value.filter((item) => item.temp >= 25).length
-})
-
-// [기존] favoriteCity = findCityById(weatherList, favoriteCityId) 로컬 computed
-// [현재] favoriteStore.favoriteCity 사용 (아래 storeToRefs)
-
-const selectedCity = computed(() => {
-  return (
-    filteredWeatherList.value.find((item) => item.id === selectedCityId.value) ||
-    filteredWeatherList.value[0] ||
-    null
-  )
-})
 
 const weatherMeta = computed(() => getWeatherMeta(selectedCity.value))
 const weatherType = computed(() => weatherMeta.value.type)
@@ -71,11 +54,41 @@ const weatherIcon = computed(() => weatherMeta.value.icon)
 const weatherSummary = computed(() => weatherMeta.value.summary)
 const todayLabel = computed(() => formatTodayLabel())
 
+const loadInitialCities = async () => {
+  isLoading.value = true
+  loadError.value = ''
+  weatherStore.statusMessage = '서울·현재 위치 날씨를 불러오는 중...'
+
+  try {
+    const seoul = await fetchWeatherByCityName('서울')
+    weatherStore.saveCity(seoul, `${seoul.name}이 선택되었습니다.`)
+    favoriteStore.setFavorite(seoul)
+  } catch (error) {
+    console.error('[weather] 서울 조회 실패', error)
+    loadError.value = '서울 날씨를 불러오지 못했습니다. 네트워크·API 키를 확인해 주세요.'
+  }
+
+  try {
+    const here = await fetchWeatherForCurrentLocation()
+    weatherStore.saveCity(here, `${here.name}(현재 위치)이 선택되었습니다.`)
+  } catch (error) {
+    console.warn('[weather] 현재 위치 조회 스킵', error)
+    if (!loadError.value && selectedCity.value) {
+      weatherStore.statusMessage = `${selectedCity.value.name}이 선택되었습니다. (위치 권한 없음 → 서울만 표시)`
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
 onMounted(() => {
   console.log('[lifecycle] WeatherComposition onMounted')
+  // KeepAlive 재진입 시 이미 캐시가 있으면 재호출하지 않음
+  if (weatherList.value.length === 0) {
+    loadInitialCities()
+  }
 })
 
-/* KeepAlive 시에도 검색 레일이 다른 라우트에 남지 않도록 */
 const railVisible = ref(true)
 onActivated(() => {
   railVisible.value = true
@@ -84,7 +97,7 @@ onDeactivated(() => {
   railVisible.value = false
 })
 
-watch(selectedCityInfo, (newInfo, oldInfo) => {
+watch(statusMessage, (newInfo, oldInfo) => {
   console.log(`[watch] 상태바 문구 변경`)
   console.log(`  이전: "${oldInfo}"`)
   console.log(`  현재: "${newInfo}"`)
@@ -92,54 +105,109 @@ watch(selectedCityInfo, (newInfo, oldInfo) => {
 
 watchEffect(() => {
   console.log(`[watchEffect] 현재 검색어 '${searchQuery.value}' 추적 중`)
-  console.log(`[watchEffect] 필터 결과 개수: ${filteredWeatherList.value.length}`)
+  console.log(`[watchEffect] 목록 개수: ${weatherList.value.length}`)
 })
 
 watch(selectedCityId, (newId) => {
-  const city = findCityById(weatherList.value, newId)
-  const isFavorite = newId === favoriteCityId.value
+  const city = weatherStore.getCachedCity(newId)
+  const isFavorite = String(newId) === String(favoriteCityId.value)
   console.log(
     `[watch] 선택 도시: ${city?.name ?? newId} / 즐겨찾기: ${isFavorite ? 'O' : 'X'}`,
   )
 })
 
-watch(
-  () => filteredWeatherList.value.length,
-  (newCount, oldCount) => {
-    console.log(`[watch] 검색 결과 개수 ${oldCount} → ${newCount}`)
-  },
-)
-
 const selectCity = (city) => {
-  selectedCityId.value = city.id
-  selectedCityInfo.value = `${city.name}이 선택되었습니다.`
+  weatherStore.selectCity(city)
 }
 
-// [router] alert 대신 Programmatic Navigation
 const goDetail = (cityId) => {
   const id = cityId || selectedCity.value?.id
   if (!id) return
+  // [과제 초기] window.alert 로 상세 표시
+  // [개선] Vue Router programmatic navigation — router.push('/weather/' + id)
+  // 이미 weatherStore 에 저장된 데이터로 상세 이동 (추가 API 없음)
   router.push('/weather/' + id)
+}
+
+const buildSuggestions = async (query) => {
+  const mapped = filterMappedCities(query).map((item) => ({
+    name: item.ko,
+    en: item.en,
+    label: `${item.ko} / ${item.en}`,
+    lat: null,
+    lon: null,
+    source: 'map',
+  }))
+
+  let geo = []
+  try {
+    isSuggestLoading.value = true
+    geo = await searchGeoCities(query, 6)
+    geo = geo.map((item) => ({ ...item, source: 'geo' }))
+  } catch (error) {
+    console.warn('[geo] 추천 검색 실패', error)
+  } finally {
+    isSuggestLoading.value = false
+  }
+
+  const merged = [...mapped]
+  geo.forEach((g) => {
+    const exists = merged.some(
+      (m) => m.en.toLowerCase() === g.en.toLowerCase() || m.name === g.name,
+    )
+    if (!exists) merged.push(g)
+  })
+  suggestions.value = merged.slice(0, 10)
 }
 
 const onUpdateQuery = (val) => {
   searchQuery.value = val
-  searchTryCount.value += 1
+
+  if (suggestTimer) clearTimeout(suggestTimer)
+  const query = val.trim()
+  if (!query) {
+    suggestions.value = []
+    return
+  }
+
+  suggestTimer = setTimeout(() => {
+    buildSuggestions(query)
+  }, 280)
+}
+
+const onSelectSuggestion = async (item) => {
+  searchQuery.value = item.name
+  suggestions.value = []
+  weatherStore.statusMessage = `${item.name} 날씨를 불러오는 중...`
+  isLoading.value = true
+
+  try {
+    let city
+    if (item.lat != null && item.lon != null) {
+      city = await fetchWeatherByCoords(item.lat, item.lon, item.name)
+    } else {
+      city = await fetchWeatherByCityName(item.en || item.name)
+    }
+    weatherStore.saveCity(city, `${city.name}이 선택되었습니다.`)
+  } catch (error) {
+    console.error('[weather] 검색 도시 조회 실패', error)
+    weatherStore.statusMessage = `'${item.name}' 날씨를 불러오지 못했습니다.`
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
 <template>
-  <!-- 검색은 App 좌측 레일로 Teleport (라우트와 같은 열) -->
   <Teleport to="#weather-left-search-slot">
     <div v-if="railVisible" class="weather-left-search" :class="themeMode">
       <WeatherCompositionSection title="도시 검색">
         <WeatherCompositionSearchBar
           :current-query="searchQuery"
-          :result-label="searchResultLabel"
-          :hot-count="hotCityCount"
-          :try-count="searchTryCount"
-          :favorite-name="favoriteCity.name"
+          :suggestions="suggestions"
+          :is-suggest-loading="isSuggestLoading"
           @update-query="onUpdateQuery"
+          @select-suggestion="onSelectSuggestion"
         />
       </WeatherCompositionSection>
     </div>
@@ -149,9 +217,14 @@ const onUpdateQuery = (val) => {
     <div class="background">
       <div class="container" :class="[weatherType, themeMode]">
         <WeatherCompositionSection title="지역별 날씨 현황" class="wc-main-section">
-          <div class="layout layout--home" v-if="filteredWeatherList.length > 0 && selectedCity">
+          <p v-if="isLoading" class="layout-empty">날씨 데이터를 불러오는 중...</p>
+          <p v-else-if="loadError && weatherList.length === 0" class="layout-empty">
+            {{ loadError }}
+          </p>
+
+          <div class="layout layout--home" v-else-if="weatherList.length > 0 && selectedCity">
             <WeatherCityList
-              :cities="filteredWeatherList"
+              :cities="weatherList"
               :selected-id="selectedCity.id"
               @select-city="selectCity"
             />
@@ -172,8 +245,8 @@ const onUpdateQuery = (val) => {
         </WeatherCompositionSection>
 
         <WeatherCompositionFooter
-          v-if="selectedCity"
-          :message="selectedCityInfo"
+          v-if="selectedCity || statusMessage"
+          :message="statusMessage"
         />
       </div>
     </div>
