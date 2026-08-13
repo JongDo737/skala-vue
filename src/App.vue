@@ -32,8 +32,9 @@ const shellClass = computed(() => ['weather-app-shell', themeMode.value])
 <template>
   <div :class="shellClass">
     <header class="weather-app-header">
-      <h1>과제 4: 라우터적용</h1>
+      <h1>Vue Hands on 과제</h1>
       <div class="weather-app-header-actions">
+        <!-- 단위, 테마 설정 버튼 통일(재사용)) -->
         <ConfigToggler type="unit" />
         <ConfigToggler type="theme" />
       </div>
