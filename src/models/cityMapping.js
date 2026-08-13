@@ -1,6 +1,18 @@
 /**
- * [cityMapping] 한글 도시명 ↔ 영문 도시명 매핑 데이터
- * API(q=영문명) 호출 전 resolveCityQuery() 로 변환한다.
+ * ============================================================================
+ * cityMapping.js — 한글/영문 도시명 매핑
+ * ============================================================================
+ *
+ * [역할]
+ * 사용자가 입력한 한글·영문 도시명을 OpenWeather API용 영문 query로 바꾸고,
+ * 화면 표시용 한글 이름과 검색 추천 목록을 제공한다.
+ *
+ * [동작 방식]
+ * 1) CITY_NAME_MAP 에 ko/en 쌍을 두고
+ * 2) resolveCityQuery() 로 API 호출용 query 결정
+ * 3) filterMappedCities() 로 입력어 기반 추천
+ * 4) toKoreanCityName() 으로 영문 → 한글 표시명 변환
+ *
  */
 
 export const CITY_NAME_MAP = [
@@ -98,6 +110,7 @@ export function filterMappedCities(input, limit = 8) {
   if (!raw) return []
   const lower = raw.toLowerCase()
 
+  // slice로 추천 개수 제한 (자동완성 UX)
   return CITY_NAME_MAP.filter(
     (item) =>
       item.ko.includes(raw) ||
@@ -110,6 +123,7 @@ export function filterMappedCities(input, limit = 8) {
 export function toKoreanCityName(enOrKo) {
   const raw = (enOrKo || '').trim()
   if (!raw) return raw
+  // 이미 한글이면 변환 불필요
   if (/[가-힣]/.test(raw)) return raw
 
   const lower = raw.toLowerCase()

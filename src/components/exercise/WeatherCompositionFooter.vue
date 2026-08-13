@@ -1,9 +1,24 @@
 <script setup>
+/*
+  ============================================================================
+  WeatherCompositionFooter.vue — Composition 하단 상태바
+  ============================================================================
+
+  [역할]
+  선택/로딩 등 상태 문구를 하단 바에 표시한다.
+
+  [동작 방식]
+  - props.message 표시
+  - inject('themeMode') 로 dark 스타일 분기
+
+  [분리한 이유]
+  푸터/상태바 UI를 메인 레이아웃에서 분리해
+  WeatherComposition 템플릿을 단순하게 유지한다.
+
+*/
+
 import { inject } from 'vue'
 
-/**
- * [props] : message — 상태바 문구
- */
 defineProps({
   message: {
     type: String,
@@ -11,6 +26,7 @@ defineProps({
   },
 })
 
+// inject: App(또는 조상)이 provide 한 테마
 const themeMode = inject('themeMode', { value: 'light' })
 </script>
 

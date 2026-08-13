@@ -1,6 +1,24 @@
+/**
+ * ============================================================================
+ * weatherService.js — OpenWeather API 연동
+ * ============================================================================
+ *
+ * [역할]
+ * OpenWeather Current Weather / Geocoding API를 호출하고,
+ * 응답을 화면용 city 객체로 변환한다. API 키는 Vite env에서 읽는다.
+ *
+ * [동작 방식]
+ * 1) VITE_OPENWEATHER_API_KEY 로 인증 파라미터 구성
+ * 2) resolveCityQuery 로 한글 입력을 영문 q 로 변환 후 GET
+ * 3) mapWeatherResponse / mapWeatherMain 으로 UI 모델 매핑
+ * 4) 필요 시 reverse geocoding 으로 한글 도시명 보정
+ *
+ */
+
 import { get } from '@/services/httpService.js'
 import { resolveCityQuery, toKoreanCityName } from '@/models/cityMapping.js'
 
+// Vite 환경변수 — .env 의 VITE_ 접두사 변수만 클라이언트에 노출됨
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 const BASE_WEATHER = 'https://api.openweathermap.org/data/2.5/weather'
 const BASE_GEO = 'https://api.openweathermap.org/geo/1.0'
@@ -13,8 +31,8 @@ if (!API_KEY) {
 
 const defaultParams = {
   appid: API_KEY,
-  units: 'metric',
-  lang: 'kr',
+  units: 'metric', // 섭씨
+  lang: 'kr', // 설명 문구 한글
 }
 
 const hasHangul = (text) => /[가-힣]/.test(text || '')
@@ -32,6 +50,7 @@ export function mapWeatherMain(main = '', description = '', icon = '') {
   if (iconPrefix === '13') return '구름' // 눈 → 카드 타입은 cloud 계열
   if (iconPrefix === '50') return '구름' // 안개
 
+  // icon 없을 때 main 문자열 폴백
   const key = (main || '').toLowerCase()
   if (key === 'clear') return '맑음'
   if (key === 'clouds') return '구름'
@@ -186,7 +205,7 @@ export async function searchGeoCities(input, limit = 6) {
   })
 }
 
-/** 역지오코딩 — 현재 위치 도시명 GET */
+/** 역지오코딩 — 현재 위치 지명 GET */
 export async function reverseGeo(lat, lon) {
   const list = await get(`${BASE_GEO}/reverse`, {
     params: {
@@ -207,7 +226,7 @@ export async function reverseGeo(lat, lon) {
   }
 }
 
-/** 브라우저 위치 → 도시 날씨 */
+/** 브라우저 Geolocation → 좌표 Promise */
 export function getCurrentPosition() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
@@ -227,6 +246,7 @@ export function getCurrentPosition() {
   })
 }
 
+/** 현재 위치 → 역지오코딩 → 날씨 */
 export async function fetchWeatherForCurrentLocation() {
   const { lat, lon } = await getCurrentPosition()
   const place = await reverseGeo(lat, lon)

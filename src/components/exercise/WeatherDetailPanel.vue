@@ -1,13 +1,26 @@
 <script setup>
+/*
+  ============================================================================
+  WeatherDetailPanel.vue — 도시 상세 정보 패널
+  ============================================================================
+
+  [역할]
+  선택 도시의 OpenWeather 상세 필드와 즐겨찾기 버튼을 보여준다.
+
+  [동작 방식]
+  - props.city 의 습도·풍속·가시거리 등을 표시
+  - computed 로 단위 변환 기온·가시거리·풍향 문구 계산
+  - 즐겨찾기 클릭 시 toggle-favorite emit
+  - inject(themeMode) 로 테마 클래스 적용
+
+  [분리한 이유]
+  상세 필드 나열 UI를 Composition/Detail 뷰에서 재사용하기 쉽게 분리한다.
+
+*/
+
 import { computed, inject } from 'vue'
 import { useConfigStore } from '@/stores/configStore'
 
-/**
- * [props] : city, favoriteName, dateLabel, summary
- * [emits] : toggle-favorite
- *
- * 상세 필드는 OpenWeather API(main/wind/clouds/visibility …) 기준으로 표시
- */
 const props = defineProps({
   city: {
     type: Object,
@@ -39,6 +52,7 @@ const toDisplayTemp = (celsius) => {
   return Math.round(raw)
 }
 
+// computed: 단위 설정에 따라 기온 표시값 갱신
 const displayTemp = computed(() => toDisplayTemp(props.city.temp))
 
 const visibilityKm = computed(() => {
@@ -105,6 +119,7 @@ const windDegText = computed(() => {
       <div>
         <dt>체감</dt>
         <dd>
+          <!-- v-if / v-else: 섭씨 기준 체감 배지 -->
           <span v-if="city.temp >= 25" class="badge hot">더움 (25℃ 이상)</span>
           <span v-else class="badge cool">선선함 (25℃ 미만)</span>
         </dd>

@@ -1,4 +1,18 @@
 <script setup>
+/**
+ * ============================================================================
+ * NotFoundView.vue — 404 Catch-all 뷰
+ * ============================================================================
+ *
+ * [역할]
+ * 정의되지 않은 URL에 진입했을 때 안내 화면을 보여 준다.
+ * 라우터의 `/:pathMatch(.*)*` 에 연결된다.
+ *
+ * [동작 방식]
+ * goHome() 이 name: 'WeatherHome' 으로 이동한다.
+ * (path 문자열 대신 name 을 쓰면 경로 변경에도 덜 깨짐)
+ *
+ */
 import { inject } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -6,11 +20,19 @@ const router = useRouter()
 const themeMode = inject('themeMode', { value: 'light' })
 
 const goHome = () => {
+  // path 대신 name 으로 이동 (라우트 이름 기반 네비게이션)
   router.push({ name: 'WeatherHome' })
 }
 </script>
 
 <template>
+  <!--
+    ============================================================================
+    NotFoundView.vue — 페이지 없음
+    ============================================================================
+    [역할] 잘못된 주소 안내 + 홈 복귀 CTA
+    [동작 방식] Catch-all 매칭 시 이 뷰가 렌더됨
+  -->
   <div class="weather-route-page not-found-page" :class="themeMode">
     <div class="not-found-content">
       <div class="error-icon">☀️❓</div>

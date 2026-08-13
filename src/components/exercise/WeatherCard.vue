@@ -1,9 +1,22 @@
 <script setup>
-/**
- * [props] : cityItem — 선택된(목록의) 도시 객체
- * [emits] : select-card — 카드 클릭
- * [emits] : click-detail — 상세보기 클릭 (.stop으로 버블링 차단)
- */
+/*
+  ============================================================================
+  WeatherCard.vue — 도시 날씨 카드
+  ============================================================================
+
+  [역할]
+  한 도시의 기온·상태를 보여주고, 카드 선택·상세보기 이벤트를 부모에 알린다.
+
+  [동작 방식]
+  - 카드 클릭 → select-card emit
+  - 상세보기 버튼 → @click.stop 으로 버블링 차단 후 click-detail emit
+  - v-if / v-else-if 로 날씨·기온 배지 표시
+
+  [분리한 이유]
+  목록 항목 UI를 반복 렌더(v-for)하기 쉽게 카드 단위로 분리한다.
+
+*/
+
 defineProps({
   cityItem: {
     type: Object,
@@ -22,6 +35,7 @@ const emit = defineEmits(['select-card', 'click-detail'])
     <h4>{{ cityItem.name }} ({{ cityItem.status }})</h4>
     <p>
       현재 기온: {{ cityItem.temp }}°C
+      <!-- v-if / v-else-if / v-else: 조건에 맞는 요소만 렌더 -->
       <span v-if="cityItem.status === '맑음'">맑음</span>
       <span v-else-if="cityItem.status === '비'">비</span>
       <span v-else-if="cityItem.status === '구름'">구름</span>
@@ -31,6 +45,7 @@ const emit = defineEmits(['select-card', 'click-detail'])
     <span v-if="cityItem.temp >= 25" class="badge hot">더움 (25도 이상)</span>
     <span v-else class="badge cool">선선함 (25도 미만)</span>
 
+    <!-- @click.stop: 버튼 클릭이 카드 @click(select-card)까지 올라가지 않게 차단 -->
     <button
       class="btn-detail"
       type="button"

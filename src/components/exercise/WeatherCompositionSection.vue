@@ -1,9 +1,22 @@
 <script setup>
-/**
- * [component] : Composition용 공통 섹션 카드
- * 검색/목록 영역을 slot으로 받아 부모(WeatherComposition)가 내용을 주입한다.
- * Slot 자식은 시각적으로 이 안에 있어도, 스크립트는 부모 스코프에서 props/emits 통신한다.
- */
+/*
+  ============================================================================
+  WeatherCompositionSection.vue — Composition 공통 섹션 카드
+  ============================================================================
+
+  [역할]
+  검색/목록 영역을 감싸는 공통 섹션(제목 + 본문 slot)을 제공한다.
+
+  [동작 방식]
+  - props.title 또는 #title slot 으로 제목 표시
+  - default slot 으로 본문(검색바·카드 등)을 부모가 주입
+
+  [분리한 이유]
+  WeatherComposition 안의 여러 패널 틀을 맞춰
+  레이아웃 CSS와 내용 컴포넌트를 나누기 위함이다.
+
+*/
+
 defineProps({
   title: {
     type: String,
@@ -14,6 +27,7 @@ defineProps({
 
 <template>
   <section class="wc-section">
+    <!-- title prop 또는 #title slot 이 있을 때만 헤더 -->
     <header v-if="title || $slots.title" class="wc-section-title">
       <slot name="title">
         <h3 v-if="title">{{ title }}</h3>

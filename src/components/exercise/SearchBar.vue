@@ -1,8 +1,21 @@
 <script setup>
-/**
- * [props] : currentQuery — 부모의 searchQuery를 내려받아 표시
- * [emits] : update-query — 입력 시 검색어를 부모에게 전달
- */
+/*
+  ============================================================================
+  SearchBar.vue — 도시 검색 입력
+  ============================================================================
+
+  [역할]
+  부모의 searchQuery를 받아 표시하고, 입력 변경을 부모로 올린다.
+
+  [동작 방식]
+  - props.currentQuery 를 :value 로 표시
+  - @input 에서 update-query emit → 부모가 searchQuery를 갱신
+
+  [분리한 이유]
+  검색 UI만 따로 두면 WeatherParent는 상태·필터 로직에 집중할 수 있다.
+
+*/
+
 defineEmits(['update-query'])
 
 defineProps({
@@ -15,6 +28,7 @@ defineProps({
 
 <template>
   <div class="search-inner">
+    <!-- 한글 조합 중 중간 값이 어긋나지 않도록 v-model 대신 :value + @input -->
     <input
       type="text"
       :value="currentQuery"

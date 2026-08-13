@@ -1,4 +1,24 @@
 <script setup>
+/*
+  ============================================================================
+  WeatherCompositionCard.vue — Composition 선택 도시 카드
+  ============================================================================
+
+  [역할]
+  선택된 도시의 기온·요약·아이콘을 보여주고,
+  카드 선택·상세보기 이벤트를 부모에 전달한다.
+
+  [동작 방식]
+  - inject(themeMode) + configStore.unit 로 표시/단위 반영
+  - computed(displayTemp) 로 섭씨/화씨 변환
+  - 상세 버튼은 @click.stop 으로 select-card 버블링 방지
+  - onMounted / onUpdated / onUnmounted 로 생명주기 로그
+
+  [분리한 이유]
+  카드 UI·단위 변환·생명주기 실습을 부모(WeatherComposition)에서 분리한다.
+
+*/
+
 import { computed, inject, onMounted, onUpdated, onUnmounted } from 'vue'
 import { useConfigStore } from '@/stores/configStore'
 import IconWeatherCard from '@/components/icons/IconWeatherCard.vue'
@@ -6,11 +26,6 @@ import IconWeatherCard from '@/components/icons/IconWeatherCard.vue'
 // [lifecycle] : setup
 console.log('[lifecycle] WeatherCompositionCard setup')
 
-/**
- * [props] : city, dateLabel, summary, icon — 선택 도시 표시
- * [emits] : select-card — 카드 선택
- * [emits] : click-detail — 상세보기
- */
 const props = defineProps({
   city: {
     type: Object,
@@ -39,6 +54,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['select-card', 'click-detail'])
+// inject: 조상이 provide 한 테마
 const themeMode = inject('themeMode', { value: 'light' })
 const configStore = useConfigStore()
 
@@ -85,6 +101,7 @@ onUnmounted(() => {
 
     <i class="wi weather-icon-badge" :class="icon" aria-hidden="true" />
 
+    <!-- v-if: 상세 버튼 표시 여부 -->
     <button
       v-if="showDetailButton"
       class="wc-card-detail"

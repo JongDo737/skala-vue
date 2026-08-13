@@ -1,4 +1,19 @@
 <script setup>
+/*
+  ============================================================================
+  WeatherMockup.vue — 날씨 대시보드 단일 파일 목업
+  ============================================================================
+
+  [역할]
+  컴포넌트 분리 전에 검색·목록·상태바를 한 파일에서 동작시켜 보는 연습용 목업이다.
+
+  [동작 방식]
+  1) weatherList를 v-for로 렌더
+  2) :value/@input으로 searchQuery 갱신 (한글 입력 실습)
+  3) 카드 클릭으로 selectedCityInfo 갱신, 상세는 @click.stop + alert
+
+*/
+
 import { ref } from 'vue'
 
 // 4일차 API 연동을 대비한 가상의 백엔드 데이터 배열 (v-for 및 :key 실습용)
@@ -28,6 +43,7 @@ const showDetail = (cityName, status) => {
     <section class="search-box">
       <h3>🔍 도시 검색</h3>
       <!-- input type="text" v-model="searchQuery" placeholder="검색할 도시 이름 입력" / -->
+      <!-- 한글 IME: v-model 대신 :value + @input -->
       <input type="text" :value="searchQuery" @input="(e) => (searchQuery = e.target.value)" placeholder="검색할 도시 이름 입력" />
       <p>
         검색 중인 도시: <strong>{{ searchQuery }}</strong>
@@ -37,6 +53,7 @@ const showDetail = (cityName, status) => {
     <section class="list-box">
       <h3>🏙️ 지역별 날씨 현황</h3>
 
+      <!-- v-for + :key: 각 도시 카드 식별 -->
       <div v-for="item in weatherList" :key="item.id" class="weather-card" @click="selectedCityInfo = `${item.name}이 선택되었습니다.`">
         <h4>{{ item.name }} ({{ item.status }})</h4>
 
@@ -50,6 +67,7 @@ const showDetail = (cityName, status) => {
         <span v-if="item.temp >= 25" class="badge hot">더움</span>
         <span v-else class="badge cool">신선함</span>
 
+        <!-- @click.stop: 상세 클릭이 카드 선택 이벤트로 전파되지 않게 -->
         <button class="btn-detail" @click.stop="showDetail(item.name, item.status)">상세보기</button>
       </div>
     </section>

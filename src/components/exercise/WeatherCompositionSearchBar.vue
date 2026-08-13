@@ -1,18 +1,25 @@
 <script setup>
+/*
+  ============================================================================
+  WeatherCompositionSearchBar.vue — Composition 도시 검색/추천
+  ============================================================================
+
+  [역할]
+  검색 입력과 추천 목록 UI를 담당하고, 입력·선택 이벤트를 부모에 전달한다.
+
+  [동작 방식]
+  - :value + @input → update-query (한글 IME 조합 중 v-model 불안정·과도 호출 방지)
+  - 추천 항목 클릭 → select-suggestion
+  - inject('themeMode') 로 테마 클래스 적용
+  - [기존] 힌트 문구(resultLabel 등) 표시 → [현재] 검색 입력 + 추천 목록만
+
+  [분리한 이유]
+  검색/추천 UI를 WeatherComposition의 API·타이머 로직과 분리한다.
+
+*/
+
 import { inject } from 'vue'
 
-/**
- * [props] currentQuery, suggestions, isSuggestLoading
- * [emits] update-query, select-suggestion
- *
- * [검색 입력 바인딩]
- * v-model 을 써 보려 했으나, 한글 IME 조합 중 값이 어중간하게 반영되거나
- * 부모 필터/추천 API가 조합 중간마다 과도하게 돌 수 있어
- * 과제 요구(:value + @input) 방식 유지로 안정화함.
- *
- * [기존] resultLabel / hotCount / tryCount / favoriteName 힌트 문구 표시
- * [현재] 검색 입력 + 추천 목록만 표시
- */
 defineProps({
   currentQuery: {
     type: String,
@@ -44,6 +51,7 @@ const onPick = (item) => {
 <template>
   <div class="wc-search" :class="themeMode">
     <div class="wc-search-toolbar">
+      <!-- 한글 IME: v-model 대신 :value + @input -->
       <input
         type="text"
         :value="currentQuery"
@@ -53,7 +61,9 @@ const onPick = (item) => {
       />
     </div>
 
+    <!-- v-if / v-else-if: 추천 목록 또는 로딩 문구 -->
     <ul v-if="suggestions.length > 0" class="wc-suggest-list">
+      <!-- v-for + :key: 추천 항목 식별 (좌표·index 조합) -->
       <li
         v-for="(item, index) in suggestions"
         :key="`${item.en}-${item.lat}-${index}`"

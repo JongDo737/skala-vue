@@ -1,11 +1,23 @@
+<!--
+  ============================================================================
+  BaseDashboardCard.vue — 대시보드 공통 카드 틀
+  ============================================================================
+
+  [역할]
+  검색 영역·목록 영역에 공통으로 쓰는 카드 UI(제목 + 본문)를 제공한다.
+
+  [동작 방식]
+  - named slot `#title` 로 제목, default slot 으로 본문 내용을 부모가 주입한다.
+  - `$slots.title` 이 있을 때만 header를 렌더한다.
+
+  [분리한 이유]
+  검색 박스와 리스트 박스의 바깥 틀(배경·패딩·테두리)을 한곳에서 맞춰
+  WeatherParent 템플릿을 단순하게 유지한다.
+
+-->
 <template>
-  <!--
-    [slot] : 검색박스 / 리스트박스 공통 카드 틀
-    부모가 SearchBar, WeatherCard 등을 이 안에 주입한다.
-    Slot으로 넣은 자식은 시각적으로 이 카드 안에 있지만,
-    스크립트는 부모(WeatherParent) 스코프에서 평가되어 props/emits로 직접 통신한다.
-  -->
   <section class="base-dashboard-card">
+    <!-- v-if + $slots: 부모가 #title 을 넘겼을 때만 헤더 표시 -->
     <header v-if="$slots.title" class="card-title">
       <slot name="title"></slot>
     </header>

@@ -1,7 +1,18 @@
 <script setup>
 /**
- * [view] : /weather/:cityId
- * weatherStore 캐시 우선 — 홈에서 이미 받은 도시는 API 재호출 없음
+ * ============================================================================
+ * WeatherDetailView.vue — 도시 날씨 상세 뷰
+ * ============================================================================
+ *
+ * [역할]
+ * /weather/:cityId 상세 화면. 카드·상세 패널·도시 목록을 보여 주고
+ * weatherStore 캐시를 우선해 불필요한 API 호출을 막는다.
+ *
+ * [동작 방식]
+ * 1) route.params.cityId 변경을 watch / onMounted 로 감지
+ * 2) resolveCityForDetail 로 캐시 hit/miss 처리
+ * 3) 선택·즐겨찾기·홈 이동은 store + router 로 처리
+ *
  */
 import { computed, ref, watch, onMounted, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -16,9 +27,11 @@ import '@/assets/weather-composition.css'
 
 const route = useRoute()
 const router = useRouter()
+// App에서 provide 한 테마 (없으면 light 기본값)
 const themeMode = inject('themeMode', { value: 'light' })
 
 const weatherStore = useWeatherStore()
+// store 상태를 반응형으로 분해 (destructure 시 반응성 유지)
 const { cities: weatherList, selectedCity, statusMessage } = storeToRefs(weatherStore)
 
 const isLoading = ref(false)
@@ -35,6 +48,7 @@ const syncCity = async (cityId) => {
   isLoading.value = true
   loadError.value = ''
 
+  // 캐시 우선 조회 (홈에서 이미 받은 도시는 API 생략)
   const result = await weatherStore.resolveCityForDetail(cityId)
   if (result.error && !result.city) {
     loadError.value = result.error
@@ -46,6 +60,7 @@ const syncCity = async (cityId) => {
 }
 
 onMounted(() => syncCity(route.params.cityId))
+// 같은 컴포넌트에서 cityId 만 바뀌는 경우 재동기화
 watch(
   () => route.params.cityId,
   (id) => syncCity(id),
@@ -68,6 +83,13 @@ const goHome = () => {
 </script>
 
 <template>
+  <!--
+    ============================================================================
+    WeatherDetailView.vue — 상세 레이아웃
+    ============================================================================
+    [역할] 도시 목록 + 카드 + 상세 패널 3단 구성
+    [동작 방식] selectedCity 가 있으면 본문, 없으면 로딩/에러 안내
+  -->
   <div class="weather-composition weather-detail-view" :class="themeMode">
     <div class="background">
       <div

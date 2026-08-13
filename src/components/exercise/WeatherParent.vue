@@ -1,4 +1,21 @@
 <script setup>
+/*
+  ============================================================================
+  WeatherParent.vue — 날씨 대시보드 부모 컴포넌트
+  ============================================================================
+
+  [역할]
+  검색어·도시 목록·상태바 문구 등 반응형 상태를 한곳에 두고,
+  자식(SearchBar, WeatherCard, WeatherStatusBar 등)과 props/emits로 통신한다.
+
+  [동작 방식]
+  1) searchQuery 변경 → filteredWeatherList(computed)로 목록 필터
+  2) SearchBar는 update-query로 검색어를 부모에 전달
+  3) WeatherCard는 select-card / click-detail로 선택·상세 요청
+  4) watch / watchEffect로 상태 변화를 콘솔에서 확인
+
+*/
+
 import { ref, computed, watch, watchEffect } from 'vue'
 import BaseDashboardCard from './BaseDashboardCard.vue'
 import SearchBar from './SearchBar.vue'
@@ -20,16 +37,19 @@ const weatherList = ref([
 const searchQuery = ref('')
 const selectedCityInfo = ref('카드를 클릭하거나 검색해 보세요.')
 
+// computed: searchQuery에 의존해 필터 결과를 캐시
 const filteredWeatherList = computed(() => {
   const query = searchQuery.value.trim()
   if (!query) return weatherList.value
   return weatherList.value.filter((item) => item.name.includes(query))
 })
 
+// watch: 특정 ref만 추적
 watch(selectedCityInfo, (newInfo) => {
   console.log(`[watch] 상태바 문구 변경 -> "${newInfo}"`)
 })
 
+// watchEffect: 내부에서 읽은 반응형 값을 자동 추적
 watchEffect(() => {
   console.log(`[watchEffect] 검색어 '${searchQuery.value}' 필터링`)
 })
@@ -67,6 +87,7 @@ const onSelectCard = (msg) => {
       </template>
 
       <!-- [4] WeatherCard: props(cityItem) / emits(select-card, click-detail) -->
+      <!-- v-for + :key: 목록 재렌더 시 항목 식별 (index보다 고유 id 권장) -->
       <WeatherCard
         v-for="item in filteredWeatherList"
         :key="item.id"
@@ -76,6 +97,7 @@ const onSelectCard = (msg) => {
       />
 
       <!-- [7] Mockup 안내 문구를 WeatherEmptyResult 컴포넌트로 추가 분리 -->
+      <!-- v-if: 결과가 없을 때만 마운트 -->
       <WeatherEmptyResult v-if="filteredWeatherList.length === 0" />
     </BaseDashboardCard>
 

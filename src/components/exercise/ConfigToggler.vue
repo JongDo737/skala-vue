@@ -1,17 +1,23 @@
 <script setup>
-/**
- * [ConfigToggler] 헤더 설정 토글 버튼 (단일 컴포넌트 재사용)
- *
- * [기존]
- * - UnitToggler.vue : 단위용 UI + 로직 따로
- * - App.vue 인라인 / ThemeToggler.vue : 테마용 UI + 로직 따로
- * → 버튼 디자인이 갈라지고 파일이 늘어남
- *
- * [리팩토링]
- * - 버튼 디자인은 이 파일 하나
- * - props.type 으로 기능만 분기 ('unit' | 'theme')
- * - App에서는 <ConfigToggler type="unit" /> / <ConfigToggler type="theme" /> 로 재사용
- */
+/*
+  ============================================================================
+  ConfigToggler.vue — 설정 토글 버튼 (단위/테마)
+  ============================================================================
+
+  [역할]
+  단위(섭씨/화씨) 또는 테마(라이트/다크) 전환 버튼을 하나로 재사용한다.
+
+  [동작 방식]
+  - props.type 이 'unit' | 'theme' 에 따라 라벨·토글 동작을 분기
+  - Pinia configStore + storeToRefs 로 unit / themeMode 를 반응형으로 읽음
+  - computed 로 버튼 문구를 계산
+
+  [분리한 이유]
+  UnitToggler / ThemeToggler 처럼 UI가 갈라지지 않게
+  버튼 디자인은 이 파일 하나, 기능만 type으로 나눈다.
+
+*/
+
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useConfigStore } from '@/stores/configStore'
@@ -26,8 +32,10 @@ const props = defineProps({
 })
 
 const configStore = useConfigStore()
+// storeToRefs: store 상태를 구조 분해해도 반응성 유지
 const { unit, themeMode } = storeToRefs(configStore)
 
+// computed: type·store 값에 따라 버튼 라벨 갱신
 const buttonLabel = computed(() => {
   if (props.type === 'unit') {
     return unit.value === 'celsius' ? '화씨(℉)' : '섭씨(℃)'

@@ -1,4 +1,22 @@
 <script setup>
+/*
+  ============================================================================
+  WeatherComposition.vue — Composition API 날씨 화면(부모)
+  ============================================================================
+
+  [역할]
+  날씨 API·Pinia 스토어·검색 추천·라우터 이동을 묶는 Composition 화면의 부모다.
+  검색 레일(Teleport)·도시 목록·카드·푸터 자식을 props/emits로 연결한다.
+
+  [동작 방식]
+  1) storeToRefs 로 weatherStore / favoriteStore 상태를 반응형으로 사용
+  2) 마운트 시 서울·현재 위치 날씨 로드 (KeepAlive 캐시가 있으면 스킵)
+  3) 검색어 debounce → 추천 목록 → 선택 시 API 조회 후 store 저장
+  4) watch / watchEffect 로 상태·검색어 변화 추적
+  5) 상세는 router.push 로 WeatherDetail 이동
+
+*/
+
 import {
   ref,
   computed,
@@ -33,6 +51,7 @@ console.log('[lifecycle] WeatherComposition setup')
 
 const router = useRouter()
 const weatherStore = useWeatherStore()
+// storeToRefs: Pinia state를 구조 분해해도 반응성 유지
 const { cities: weatherList, selectedCityId, statusMessage, selectedCity } =
   storeToRefs(weatherStore)
 
@@ -46,8 +65,10 @@ let suggestTimer = null
 const favoriteStore = useFavoriteStore()
 const { favoriteCityId } = storeToRefs(favoriteStore)
 
+// inject: App 등 조상이 provide 한 themeMode
 const themeMode = inject('themeMode', ref('light'))
 
+// computed: 선택 도시 메타(아이콘·요약·타입) 파생
 const weatherMeta = computed(() => getWeatherMeta(selectedCity.value))
 const weatherType = computed(() => weatherMeta.value.type)
 const weatherIcon = computed(() => weatherMeta.value.icon)
@@ -89,6 +110,7 @@ onMounted(() => {
   }
 })
 
+// KeepAlive: 활성화/비활성화에 맞춰 Teleport 검색 레일 표시
 const railVisible = ref(true)
 onActivated(() => {
   railVisible.value = true
@@ -97,12 +119,14 @@ onDeactivated(() => {
   railVisible.value = false
 })
 
+// watch: statusMessage 한 값만 추적
 watch(statusMessage, (newInfo, oldInfo) => {
   console.log(`[watch] 상태바 문구 변경`)
   console.log(`  이전: "${oldInfo}"`)
   console.log(`  현재: "${newInfo}"`)
 })
 
+// watchEffect: 내부에서 읽은 searchQuery·weatherList 를 자동 추적
 watchEffect(() => {
   console.log(`[watchEffect] 현재 검색어 '${searchQuery.value}' 추적 중`)
   console.log(`[watchEffect] 목록 개수: ${weatherList.value.length}`)
@@ -163,6 +187,7 @@ const buildSuggestions = async (query) => {
 const onUpdateQuery = (val) => {
   searchQuery.value = val
 
+  // debounce: 한글 입력 중 API를 매 글자마다 치지 않도록 지연
   if (suggestTimer) clearTimeout(suggestTimer)
   const query = val.trim()
   if (!query) {
@@ -199,6 +224,7 @@ const onSelectSuggestion = async (item) => {
 </script>
 
 <template>
+  <!-- Teleport: 검색 UI를 레이아웃의 좌측 슬롯으로 이동 -->
   <Teleport to="#weather-left-search-slot">
     <div v-if="railVisible" class="weather-left-search" :class="themeMode">
       <WeatherCompositionSection title="도시 검색">
@@ -217,6 +243,7 @@ const onSelectSuggestion = async (item) => {
     <div class="background">
       <div class="container" :class="[weatherType, themeMode]">
         <WeatherCompositionSection title="지역별 날씨 현황" class="wc-main-section">
+          <!-- v-if / v-else-if / v-else: 로딩·에러·목록·빈 상태 분기 -->
           <p v-if="isLoading" class="layout-empty">날씨 데이터를 불러오는 중...</p>
           <p v-else-if="loadError && weatherList.length === 0" class="layout-empty">
             {{ loadError }}

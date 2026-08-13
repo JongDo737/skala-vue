@@ -1,6 +1,18 @@
 /**
- * [model] 날씨 표시용 유틸
- * [기존] WEATHER_LIST mock 배열 → [현재] OpenWeather API 응답을 mapWeatherResponse 로 변환
+ * ============================================================================
+ * weatherModel.js — 날씨 표시용 모델/유틸
+ * ============================================================================
+ *
+ * [역할]
+ * API 응답을 화면에 쓰기 위한 메타(아이콘·타입·요약)와
+ * 목록 upsert, 날짜 라벨 등 순수 유틸을 모은다.
+ * (기존 mock WEATHER_LIST 대신 API 데이터를 다루는 쪽으로 역할이 바뀜)
+ *
+ * [동작 방식]
+ * 1) WEATHER_STATUS_MAP 으로 status → 카드 type/icon/summary 매핑
+ * 2) getWeatherMeta() 가 description을 우선해 요약 문구를 결정
+ * 3) upsertCity() 로 id 기준 목록 갱신(있으면 merge, 없으면 push)
+ *
  */
 
 export const DEFAULT_FAVORITE_CITY_ID = '1835848' // Seoul (OpenWeather city id)
@@ -20,6 +32,7 @@ export const EMPTY_WEATHER_META = {
 }
 
 export const findCityById = (cities, cityId) => {
+  // id 타입(number/string)이 달라도 비교되도록 String으로 통일
   return cities.find((item) => String(item.id) === String(cityId)) || null
 }
 
@@ -46,6 +59,7 @@ export const getWeatherMeta = (city) => {
 }
 
 export const formatTodayLabel = () => {
+  // 브라우저 로케일 포맷터로 "Thursday, August 13" 형태 라벨 생성
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     day: 'numeric',
@@ -53,7 +67,7 @@ export const formatTodayLabel = () => {
   }).format(new Date())
 }
 
-/** 목록에 도시 upsert (id 기준) */
+/** 목록에 도시 upsert (id 기준) — 원본 배열을 직접 수정하지 않음 */
 export const upsertCity = (list, city) => {
   const next = [...list]
   const idx = next.findIndex((item) => String(item.id) === String(city.id))

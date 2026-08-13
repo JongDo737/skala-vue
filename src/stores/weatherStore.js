@@ -1,20 +1,25 @@
+/**
+ * ============================================================================
+ * weatherStore.js — 날씨 목록·선택 캐시 Store
+ * ============================================================================
+ *
+ * [역할]
+ * API로 받은 도시 날씨를 cities에 캐시하고, 상세 페이지에서 재호출을 줄인다.
+ *
+ * [동작 방식]
+ * 1) saveCity() 로 upsert + 선택 id 갱신
+ * 2) getCachedCity() 로 캐시 조회
+ * 3) resolveCityForDetail() 는 hit면 API 생략, miss일 때만 fetchWeatherById
+ *
+ */
+
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { findCityById, upsertCity } from '@/models/weatherModel.js'
 import { fetchWeatherById } from '@/services/weatherService.js'
 
-/**
- * [weatherStore] 날씨 목록·선택 상태 캐시
- *
- * [기존 문제]
- * - 홈에서 API로 받은 뒤, 상세(/weather/:id) 진입 시 fetchWeatherById 를 다시 호출
- *
- * [최적화]
- * - 첫 응답을 cities 에 저장
- * - 상세는 캐시 hit 시 API 생략, miss 일 때만 GET
- */
 export const useWeatherStore = defineStore('weather', () => {
-  const cities = ref([])
+  const cities = ref([]) // 검색/조회된 도시 캐시
   const selectedCityId = ref('')
   const statusMessage = ref('')
 
@@ -48,6 +53,7 @@ export const useWeatherStore = defineStore('weather', () => {
       return { city: null, fromCache: false, error: 'cityId가 없습니다.' }
     }
 
+    // 캐시 hit → 네트워크 호출 없이 바로 사용
     const cached = getCachedCity(cityId)
     if (cached) {
       selectedCityId.value = String(cached.id)
@@ -55,6 +61,7 @@ export const useWeatherStore = defineStore('weather', () => {
       return { city: cached, fromCache: true, error: null }
     }
 
+    // 캐시 miss → city id 로 API 조회 후 저장
     try {
       const city = await fetchWeatherById(cityId)
       saveCity(city, `${city.name}이 선택되었습니다.`)
